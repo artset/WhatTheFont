@@ -77,23 +77,30 @@ class SCAE(tf.keras.Model):
         self.epoch = 1
 
         # Conv2D(64, (3, 3), activation='relu', padding='same')
-        self.conv_layer1 = Conv2D(filters=64, strides=(2,2), kernel_size=(3,3), activation='relu', padding='same', name='conv_layer1')
-        self.conv_layer2 = Conv2D(filters=128, strides=(2,2), kernel_size=(3,3), activation='relu', padding='same', name='conv_layer2')
-        self.deconv_layer1 = Conv2DTranspose(filters=64, strides=(2,2), kernel_size=(3,3), activation='relu', padding='same', name='deconv_layer1')
-        self.deconv_layer2 = Conv2DTranspose(filters=1, strides=(2,2), kernel_size=(3,3), activation='relu', padding='same', name='deconv_layer2')
+        self.stride_size = 2
+        self.reshape = tf.keras.layers.Reshape((105, 105, 1))
+        self.conv_layer1 = Conv2D(filters=64, strides=self.stride_size, kernel_size=(3,3), activation='relu', padding='same', name='conv_layer1')
+        self.conv_layer2 = Conv2D(filters=128, strides=self.stride_size, kernel_size=(3,3), activation='relu', padding='same', name='conv_layer2')
+        self.deconv_layer1 = Conv2DTranspose(filters=64, strides=self.stride_size, kernel_size=(3,3), activation='relu', padding='same', name='deconv_layer1')
+        self.deconv_layer2 = Conv2DTranspose(filters=1, strides=self.stride_size, kernel_size=(3,3), activation='relu', padding='same', name='deconv_layer2')
 
 
     def call(self, inputs):
-        c1 = self.conv_layer1(inputs)
-#         c1 = tf.nn.max_pool(c1, [1, 2, 2 ,1], 2, self.padding) #? idk
-        c2 = self.conv2_layer2(c1)
+        inputs = self.reshape(inputs)
 
-        d1 = self.deconv_layer1(d1)
+        c1 = self.conv_layer1(inputs)
+        print("c1 shape", c1.shape)
+#         c1 = tf.nn.max_pool(c1, [1, 2, 2 ,1], 2, self.padding) #? idk
+        c2 = self.conv_layer2(c1)
+        print("c2 shape", c2.shape)
+
+        d1 = self.deconv_layer1(c2)
+        print("d1 shape", d1.shape)
         # paper says unpool, we say not now
-        d2 = self.deconv_layer(d1)
+        d2 = self.deconv_layer2(d1)
         return d2
 
-    def loss(original, decoded):
+    def loss(self, original, decoded):
         return tf.reduce_sum((original-decoded)**2) / original.shape[0]
 
 def train(model, images):
@@ -111,7 +118,7 @@ def train(model, images):
 
 def main():
 
-    dict, images, font_labels = butt()
+    dict, images, font_labels = get_train()
     images = np.array(images)
 
     # Initialize generator and discriminator models

@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow.keras import Model
 from tensorflow.keras.layers import Dense, Flatten, Conv2D, BatchNormalization, LeakyReLU, Reshape, Conv2DTranspose
 import tensorflow_hub as hub
-
+from collections import Counter
 import numpy as np
 
 from imageio import imwrite
@@ -72,9 +72,9 @@ class DeepFont(tf.keras.Model): #is this how to convert to sequential?
 		"""
 		super(DeepFont, self).__init__()
 		# TODO: Define the model, loss, and optimizer
-		self.batch_size = 100
+		self.batch_size = 1
 		self.model = tf.keras.Sequential()
-		# self.model.add(tf.keras.layers.Reshape((100, 105, 105,)))
+		self.model.add(tf.keras.layers.Reshape((105, 105, 1)))
 		self.model.add(tf.keras.layers.Conv2D(filters=64, strides=(2,2), kernel_size=(3,3), padding='same', name='conv_layer1', input_shape=(105, 105,1))) #, input_shape=(args.batch_size,)
 		self.model.add(tf.keras.layers.BatchNormalization())
 		self.model.add(tf.keras.layers.MaxPooling2D(pool_size=(2,2), strides=None, padding='same'))
@@ -119,6 +119,49 @@ class DeepFont(tf.keras.Model): #is this how to convert to sequential?
 		loss = tf.keras.losses.sparse_categorical_crossentropy(labels, probs)
 		return loss
 
+	# @tf.function
+	# def single_image_accuracy(self, probs, label):
+	# 	""" given 15 images and its label, computes accuracy
+	# 	"""
+	# 	print("---single image accuracy--")
+	# 	predictions = []
+	#
+	# 	for i in range(len(probs)):
+	# 		predictions.append(np.argmax(probs[i]))
+	#
+	# 	tracker = Counter(predictions)
+	# 	print(tracker)
+	# 	print(label)
+	#
+	# 	if (max(tracker, key = tracker.get) == label):
+	# 		return 1
+	# 	return 0
+
+	# @tf.function
+	def total_accuracy(self, probs, labels):
+		"""  given a batch of images ( 15 x batch_size), compute accuracy over those images
+		"""
+		print("----------total accuracy ----------")
+		total_accuracy = 0
+		print(len(probs))
+		for i in range(0, len(probs), 15):
+			# total_accuracy += self.single_image_accuracy(probs[i:i+ 15], labels[i])
+			single_image_probs  = probs[i: i+15]
+			single_image_labels = labels[i]
+
+			predictions = []
+			for j in range(len(probs)):
+				predictions.append(np.argmax(single_image_probs[i]))
+
+			tracker = Counter(predictions)
+			print(tracker)
+			if (max(tracker, key = tracker.get) == single_image_labels):
+				total_accuracy += 1
+
+		return total_accuracy / float(len(probs)/15)
+
+
+
 def train(model, train_inputs, train_labels):
 	"""
 	Train the model for one epoch. Save a checkpoint every 500 or so batches.
@@ -151,25 +194,29 @@ def test(model, test_inputs, test_labels):
 
 	:return: None
 	"""
-	loss = 0
-	num_batches = 2
-	for i in range(num_batches):
-		temp_inputs = test_inputs[i*2:(i+1)*2]
-		temp_test_labels = test_labels[i*2:(i+1)*2]
+	# 4 batches with one image in each batch_inputs
+	num_batches = len(test_inputs) // (model.batch_size * 15)
+	cropped_images = 15
 
-		predictions = model.call(temp_inputs)
-		loss += model.loss_function(predictions, temp_test_labels)
-	loss = loss/2
-	return loss
+	acc = 0
+
+
+	for i in range(num_batches): # hardcode 15 because each i is an image
+		# print("-------------batch", i, "-------------")
+		batch_inputs = test_inputs[i * model.batch_size * cropped_images: (i+1) * model.batch_size * cropped_images]
+		batch_labels = test_labels[i * model.batch_size : (i+1) * model.batch_size]
+
+		predictions = model.call(batch_inputs) # prediction for a single image
+		acc += model.total_accuracy(predictions, batch_labels)
+		# print("summed accuracy", acc)
+	return acc / float(num_batches)
+
 
 ## --------------------------------------------------------------------------------------
 
 def main():
 	# Initialize generator and discriminator models
-	print("poop")
-	test_dict, test_images, test_labels = get_test()
-	dict, images, font_labels = get_train()
-	images = np.array(images)
+
 
 	model = DeepFont()
 	model.load_weights('./weights/weights.h5', by_name=True)
@@ -185,12 +232,15 @@ def main():
 
 	if args.restore_checkpoint or args.mode == 'test':
 		# restores the lates checkpoint using from the manager
+		print("Running test mode...")
 		checkpoint.restore(manager.latest_checkpoint)
 
 	try:
 		# Specify an invalid GPU device
 		with tf.device('/device:' + args.device):
 			if args.mode == 'train':
+				dict, images, font_labels = get_train()
+				images = np.array(images)
 				for epoch in range(0, args.num_epochs):
 					print('========================== EPOCH %d  ==========================' % epoch)
 					train(model, images, font_labels)
@@ -198,7 +248,8 @@ def main():
 					print("**** SAVING CHECKPOINT AT END OF EPOCH ****")
 					manager.save()
 			if args.mode == 'test':
-				test(model, test_images, test_labels)
+				test_dict, test_images, test_labels = get_test()
+				print("--test accuracy--", test(model, test_images, test_labels))
 	except RuntimeError as e:
 		print(e)
 
