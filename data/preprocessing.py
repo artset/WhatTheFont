@@ -9,13 +9,13 @@ import cv2
 
 # note to self: clean stuff like bodoni std bold such that images aren't .png.png
 
-def resize_image(image):
+def resize_image(image, image_dimension):
     """ Input: Image Path
         Output: Image
-        Resizes image to height of 105px. Maintains aspect ratio
+        Resizes image to height of 96px. Maintains aspect ratio
     """
-    base_height = 105
-    img = image #Image.open(image_path)
+    base_height = image_dimension
+    img = image
     height_percent = (base_height/float(img.size[1]))
     wsize = int((float(img.size[0])*float(height_percent)))
     # print("Width", wsize)
@@ -29,8 +29,8 @@ def generate_crop(img, image_dimension, num_vals):
     """
     cropped_images = []
     width = len(np.array(img)[1])
-    # 120 is 105 + 15; we need at least 15 random crops possible, thus the width must be greater than 120
-    # in the condition when width < 120, we shoould find a way to edit the image rather than omitting it
+    # 111 is 96 + 15; we need at least 15 random crops possible, thus the width must be greater than 111
+    # in the condition when width < 111, we shoould find a way to edit the image rather than omitting it
     if width > image_dimension + num_vals:
         bounds = random.sample(range(0, width-image_dimension), num_vals)
         for i in range(num_vals):
@@ -42,6 +42,9 @@ def generate_crop(img, image_dimension, num_vals):
 def alter_image(image_path):
     """ Function to apply all of the filters to a single image.
     """
+    if image_path[-3:] != 'jpg' || image_path[-3:] != 'png':
+        return
+
     img = Image.open(image_path)
     img = np.array(img)
     # noise
@@ -123,7 +126,10 @@ def create_pickle(root_dir):
 
             image_path = subdir_path + "/" + file
             image = alter_image(image_path)
-            image = resize_image(image)
+
+            if image == None:
+                continue
+            image = resize_image(image, 96)
             cropped_images = generate_crop(image, 96, 15)
 
             if file_count < 100:
@@ -141,7 +147,7 @@ def create_pickle(root_dir):
 
             file_count += 1
 
-        with open('scae_inputs.pkl', 'wb') as output:
+        with open('scae_synthetic_inputs.pkl', 'wb') as output:
             pickle.dump(scae_inputs, output)
 
         with open('train_inputs.pkl', 'wb') as output:
@@ -171,6 +177,40 @@ def get_data(root):
 
 
     print("Finished opening pickled data...")
+
+def process_unlabeled_real(root_dir):
+    """ Input: Root directory (string)
+        Output: Creates 5 pickle files to use for our model.
+        1) Train inputs for SCAE
+        2) Train input & labels for DeepFont model
+        3) Test input & labels for DeepFont Model
+    """
+    scae_inputs = []
+
+    count = 0
+
+    for file in os.listdir(root_dir): # goes through all font folders
+        file_path = root_dir + "/" + file
+
+        image_path = subdir_path + "/" + file
+        image = alter_image(image_path)
+
+        if image == None:
+            continue
+
+        image = resize_image(image)
+        cropped_images = generate_crop(image, 96, 15)
+
+        for c in cropped_images:
+            scae_inputs.append(c)
+
+        if count % 2000:
+            print("---", count, "images processed---")
+        count += 1
+
+
+        with open('scae_real_inputs.pkl', 'wb') as output:
+            pickle.dump(scae_inputs, output)
 
 
 # def get_train():
@@ -219,8 +259,9 @@ def main():
     #     image_file = "test_img/" +str(count) + "img.png"
     #     final_image.save(image_file, format='PNG')
     #     count += 1
-    # 
+    #
     # create_pickle("real_test_sample")
+    process_unlabeled_real("../../final_data/scrape-wtf-new")
 
 
 
