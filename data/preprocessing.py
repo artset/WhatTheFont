@@ -8,7 +8,6 @@ import pickle
 import cv2
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
-# note to self: clean stuff like bodoni std bold such that images aren't .png.png
 
 def resize_image(image, image_dimension):
     """ Input: Image Path
@@ -180,10 +179,12 @@ def create_pickle(root_dir):
     print("Finished preprocessing...")
 
 
-def process_single_pickle(root_dir, destination):
+def process_single_pickle(root_dir, destination, if_cropped):
     """
     destination is the file path including the file name
     to the stored pickled
+
+    if_cropped can be set to false for the df_modified to receive unmodified images.
     """
 
     image_array = []
@@ -196,13 +197,26 @@ def process_single_pickle(root_dir, destination):
             image_path = subdir_path + "/" + file
             image = alter_image(image_path)
 
-            image = resize_image(image, 96)
-            cropped_images = generate_crop(image, 96, 15)
+            if if_cropped:
+                image = resize_image(image, 96)
 
-            for c in cropped_images:
-                image_array.append(c)
+                cropped_images = generate_crop(image, 96, 15)
 
-    image_array = np.array(image_array)
+                for c in cropped_images:
+                    image_array.append(c)
+            else:
+                image = np.array(image)
+                # I HAVE NO IDEA WHY THIS WORKS.
+                if image.shape[0] % 2 != 1:
+                    image = image[1:][:]
+
+                if image.shape[1] % 2 != 1:
+                    image = image[:][1:]
+                image_array.append(image)
+
+
+    if if_cropped:
+        image_array = np.array(image_array)
 
     with open(destination, 'wb') as output:
         pickle.dump(image_array, output)
@@ -266,18 +280,33 @@ def process_unlabeled_real(root_dir):
 def df_modified_test_pickles():
     """
     this function calls preprocess and produces pickles of images that
-    have not been crpoped; there is one version of each image
+    have not been cropped; there is one version of each image
     """
-    process_single_pickle("../data/real_test_sample", "../data/df_sample_test_inputs.pkl")
-    process_single_pickle("../data/syn_train_one_font", "../data/df_sample_train_inputs.pkl")
+    process_single_pickle("../data/real_test_sample", "../data/df_sample_test_inputs_uncropped.pkl", False)
+    process_single_pickle("../data/syn_train_one_font", "../data/df_sample_train_inputs_uncropped.pkl", False)
+
+    train_labels = np.zeros(1000)
+    test_labels = np.zeros(1)
+
+    ti_pickle = open('../data/df_sample_test_inputs_uncropped.pkl', 'rb')
+    test_inputs = pickle.load(ti_pickle)
+    ti_pickle.close()
+
+    tri_pickle = open('../data/df_sample_train_inputs_uncropped.pkl', 'rb')
+    train_inputs = pickle.load(tri_pickle)
+    tri_pickle.close()
+
+    return train_inputs, train_labels, test_inputs, test_labels
+
+
 
 def df_test_pickles():
     """
-    function specifically to help run df_original on a small data set
+    function specifically to help run df_original on a small data set.
     """
 
-    process_single_pickle("../data/real_test_sample", "../data/df_sample_test_inputs.pkl")
-    process_single_pickle("../data/syn_train_one_font", "../data/df_sample_train_inputs.pkl")
+    process_single_pickle("../data/real_test_sample", "../data/df_sample_test_inputs.pkl", True)
+    process_single_pickle("../data/syn_train_one_font", "../data/df_sample_train_inputs.pkl", True)
     train_labels = np.zeros(1000)
     test_labels = np.zeros(1)
 

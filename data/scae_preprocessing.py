@@ -192,9 +192,10 @@ def process_unlabeled_real(root_dir):
     """
     scae_inputs = []
 
-    print(root_dir)
+    print("Starting processing of unlabeled real...")
     count = 0
-
+    pickle_count = 1
+    num_images = 5000 # number of images in each pickle
     # files = [f.path for f in os.scandir(root_dir) if f.name.endswith(".jpg") or f.name.endswith(".png")]
 
     for f in os.scandir(root_dir):
@@ -204,26 +205,30 @@ def process_unlabeled_real(root_dir):
             image = alter_image(image_path)
             image = resize_image(image, 96)
 
-            # if count == 100:
-            #     image.save("freshypoop.png", format='PNG')
-            #     return
-
             if count % 2000 == 0:
-                count_str = str(count)
-                image.save("./imgs/" + count_str + ".png", "PNG")
-                print( "Saved img with number: ", count)
-
-                # print("---", count, "images processed---")
+                # image.save("./imgs/" + count_str + ".png", "PNG")
+                print( "Images preprocessed: ", count)
 
             cropped_images = generate_crop(image, 96, 15)
 
             for c in cropped_images:
                 scae_inputs.append(c)
 
+            if count % num_images == 0 and count > 0:
+                pickle_path = 'scae_real_inputs' + str(pickle_count) + '.pkl'
+                with open(pickle_path, 'wb') as output:
+                    pickle.dump(scae_inputs, output)
+                print("Finished the", pickle_count," batch of pickles")
+                pickle_count +=1
+                scae_inputs = []
+
             count += 1
 
-    with open('scae_real_inputs.pkl', 'wb') as output:
-        pickle.dump(scae_inputs, output)
+    if len(scae_inputs) > 0:
+        pickle_path = 'scae_real_inputs' + str(pickle_count) + '.pkl'
+        with open(pickle_path, 'wb') as output:
+            pickle.dump(scae_inputs, output)
+        print("----Last batch of pickle contains", len(scae_inputs), " images")
 
 
     # for file in os.listdir(root_dir): # goes through all font folders
@@ -271,7 +276,9 @@ def main():
     #
     # create_pickle("real_test_sample")
     print("Start processing!")
-    process_unlabeled_real("./scrape-wtf-new")
+    # process_unlabeled_real("./scrape-wtf-new")
+    process_unlabeled_real("./syn_train_one_font/ACaslonPro-Bold")
+
 
 
 

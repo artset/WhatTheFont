@@ -111,6 +111,7 @@ class DeepFont(tf.keras.Model): #is this how to convert to sequential?
 		:return: logits for each batch image and its classification distribution
 		"""
 		# TODO: Call the forward pass
+		print(inputs)
 		conv_layers =  self.model(inputs)
 		reduced_cols = tf.reduce_mean(conv_layers, 1)
 		reduced_rows =  tf.reduce_mean(reduced_cols, 1)
@@ -255,7 +256,7 @@ def main():
 	try:
 		# Specify an invalid GPU device
 		with tf.device('/device:' + args.device):
-			train_inputs, train_labels, test_inputs, test_labels = df_test_pickles()
+			train_inputs, train_labels, test_inputs, test_labels = df_modified_test_pickles()
 			if args.mode == 'train':
 				# images = get_train()
 				# images = np.array(images)

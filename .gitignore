@@ -13,3 +13,6 @@ data/train_inputs.pkl
 data/train_labels.pkl
 data/df_sample_test_inputs.pkl
 data/df_sample_train_inputs.pkl
+data/df_sample_test_inputs_uncropped.pkl
+data/df_sample_train_inputs_uncropped.pkl
+data/scae_real_inputs1.pkl
