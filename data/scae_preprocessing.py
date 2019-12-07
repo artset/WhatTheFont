@@ -198,7 +198,7 @@ def process_unlabeled_real(root_dir):
     # files = [f.path for f in os.scandir(root_dir) if f.name.endswith(".jpg") or f.name.endswith(".png")]
 
     for f in os.scandir(root_dir):
-        if f.name.endswith(".jpg") or f.name.endswith(".png"):
+        if f.name.endswith(".jpeg") or f.name.endswith(".jpg") or f.name.endswith(".png"):
             image_path = f.path
 
             image = alter_image(image_path)

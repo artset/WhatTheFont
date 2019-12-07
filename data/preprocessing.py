@@ -23,9 +23,11 @@ def resize_image(image, image_dimension):
     img = img.resize((wsize, base_height),Image.ANTIALIAS )
     return img
 
+
+
 def generate_crop(img, image_dimension, num_vals):
     """ Input: Image object, the width and height of our image, number of cropped images
-        Output: A list of images.
+        Output: A list of mnormalized numpy arrays normalized between 0 and 1.
         Randomly generates 15 cropped images
     """
     cropped_images = []
@@ -43,6 +45,8 @@ def generate_crop(img, image_dimension, num_vals):
 
 def alter_image(image_path):
     """ Function to apply all of the filters to a single image.
+        Input: Image path
+        Output: Altered image object
     """
 
     img = Image.open(image_path)
@@ -236,7 +240,7 @@ def process_unlabeled_real(root_dir):
     #     print(file)
     #     filename = os.fsdecode(file)
     #
-    #     if filename.endswith(".png") or filename.endswith(".jpg"):
+    #     if filename.endswith(".jpeg") or filename.endswith(".png") or filename.endswith(".jpg"):
     #         image_path = root_dir + "/" + file
     #
     #
@@ -258,6 +262,14 @@ def process_unlabeled_real(root_dir):
     # with open('scae_real_inputs.pkl', 'wb') as output:
     #     pickle.dump(scae_inputs, output)
     return
+
+def df_modified_test_pickles():
+    """
+    this function calls preprocess and produces pickles of images that
+    have not been crpoped; there is one version of each image
+    """
+    process_single_pickle("../data/real_test_sample", "../data/df_sample_test_inputs.pkl")
+    process_single_pickle("../data/syn_train_one_font", "../data/df_sample_train_inputs.pkl")
 
 def df_test_pickles():
     """
