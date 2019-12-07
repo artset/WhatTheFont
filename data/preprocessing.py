@@ -35,15 +35,14 @@ def generate_crop(img, image_dimension, num_vals):
         bounds = random.sample(range(0, width-image_dimension), num_vals)
         for i in range(num_vals):
             new_img = img.crop((bounds[i], 0, bounds[i] + image_dimension, image_dimension))
-    #         new_img.save("crop" + str(i) + ".jpg", format='JPEG')
+            new_img = np.array(new_img) / 255.0
+
             cropped_images.append(new_img)
     return cropped_images
 
 def alter_image(image_path):
     """ Function to apply all of the filters to a single image.
     """
-    if image_path[-3:] != 'jpg' || image_path[-3:] != 'png':
-        return
 
     img = Image.open(image_path)
     img = np.array(img)
@@ -127,8 +126,6 @@ def create_pickle(root_dir):
             image_path = subdir_path + "/" + file
             image = alter_image(image_path)
 
-            if image == None:
-                continue
             image = resize_image(image, 96)
             cropped_images = generate_crop(image, 96, 15)
 
@@ -147,21 +144,51 @@ def create_pickle(root_dir):
 
             file_count += 1
 
-        with open('scae_synthetic_inputs.pkl', 'wb') as output:
-            pickle.dump(scae_inputs, output)
+    scae_inputs = np.array(scae_inputs)
+    train_inputs = np.array(train_inputs)
+    train_labels = np.array(train_labels)
+    test_inputs = np.array(test_inputs)
+    test_labels = np.array(test_labels)
 
-        with open('train_inputs.pkl', 'wb') as output:
+    with open('scae_synthetic_inputs.pkl', 'wb') as output:
+        pickle.dump(scae_inputs, output)
+
+    with open('train_inputs.pkl', 'wb') as output:
             pickle.dump(train_inputs, output)
 
-        with open('test_inputs.pkl', 'wb') as output:
-            pickle.dump(test_inputs, output)
+    with open('test_inputs.pkl', 'wb') as output:
+        pickle.dump(test_inputs, output)
 
-        with open('train_labels.pkl', 'wb') as output:
-            pickle.dump(train_labels, output)
+    with open('train_labels.pkl', 'wb') as output:
+        pickle.dump(train_labels, output)
 
-        with open('test_labels.pkl', 'wb') as output:
-            pickle.dump(test_labels, output)
-        print("Finished preprocessing...")
+    with open('test_labels.pkl', 'wb') as output:
+        pickle.dump(test_labels, output)
+
+    print("Finished preprocessing...")
+
+def process_single_pickle(root_dir):
+    image_array = []
+
+    for subdir in os.listdir(root_dir): # goes through all font folders
+        subdir_path = root_dir + "/" + subdir
+
+        for file in os.listdir(subdir_path): # goes through all sample images
+
+            image_path = subdir_path + "/" + file
+            image = alter_image(image_path)
+
+            image = resize_image(image, 96)
+            cropped_images = generate_crop(image, 96, 15)
+
+            for c in cropped_images:
+                image_array.append(c)
+
+    image_array = np.array(image_array)
+
+    with open('../data/scae_small_images.pkl', 'wb') as output:
+        pickle.dump(image_array, output)
+
 
 def get_data(root):
     """
@@ -187,53 +214,65 @@ def process_unlabeled_real(root_dir):
     """
     scae_inputs = []
 
+    print(root_dir)
     count = 0
 
-    for file in os.listdir(root_dir): # goes through all font folders
-        file_path = root_dir + "/" + file
+    print(os.listdir(root_dir))
+    # for file in os.listdir(root_dir): # goes through all font folders
+    #     print(file)
+    #     filename = os.fsdecode(file)
+    #
+    #     if filename.endswith(".png") or filename.endswith(".jpg"):
+    #         image_path = root_dir + "/" + file
+    #
+    #
+    #         print(image_path)
+    #         image = alter_image(image_path)
+    #
+    #
+    #         image = resize_image(image)
+    #         cropped_images = generate_crop(image, 96, 15)
+    #
+    #         for c in cropped_images:
+    #             scae_inputs.append(c)
+    #
+    #         if count % 2000:
+    #             print("---", count, "images processed---")
+    #         count += 1
+    #
+    #
+    # with open('scae_real_inputs.pkl', 'wb') as output:
+    #     pickle.dump(scae_inputs, output)
+    return
 
-        image_path = subdir_path + "/" + file
-        image = alter_image(image_path)
 
-        if image == None:
-            continue
+def get_train():
+    print("Running preprocessing...")
+    # root_dir = 'C:/Users/katsa/Documents/cs/cs1470/real_images/VFR_real_test' #Katherine's file path
+#     root_dir =  'C:/Users/kimur/Documents/homework/cs1470/VFR_real_test' #Minna's file path
+    # root_dir = './syn_train_one_font'
+    process_single_pickle('../data/syn_train_one_font')
+    pickled = open('../data/scae_small_images.pkl', 'rb')
+    array = pickle.load(pickled)
+    pickled.close()
 
-        image = resize_image(image)
-        cropped_images = generate_crop(image, 96, 15)
-
-        for c in cropped_images:
-            scae_inputs.append(c)
-
-        if count % 2000:
-            print("---", count, "images processed---")
-        count += 1
+    return array
+    # return cropped_images, big_array, font_labels
 
 
-        with open('scae_real_inputs.pkl', 'wb') as output:
-            pickle.dump(scae_inputs, output)
 
+    # single_file = 'C:/Users/kimur/Documents/homework/cs1470/VFR_real_test/ACaslonPro-Bold/ACaslonPro-Bold1276.png'
+    # alter_image(single_file)
 
-# def get_train():
-#     print("Running preprocessing...")
-#     # root_dir = 'C:/Users/katsa/Documents/cs/cs1470/real_images/VFR_real_test' #Katherine's file path
-# #     root_dir =  'C:/Users/kimur/Documents/homework/cs1470/VFR_real_test' #Minna's file path
-#     root_dir = './syn_train_one_font'
-
-#     cropped_images, font_labels, big_array = preprocess(root_dir)
-
-#     # single_file = 'C:/Users/kimur/Documents/homework/cs1470/VFR_real_test/ACaslonPro-Bold/ACaslonPro-Bold1276.png'
-#     # alter_image(single_file)
-
-#     #     print(cropped_images["ACaslonPro-Bold"])
-#     #     print()
-#     #     print(cropped_images["ACaslonPro-Italic"])
-#     return cropped_images, big_array, font_labels
-#     # with open('syn_train_fonts_1.pkl', 'wb') as output:
-#     #     pickle.dump(cropped_images, output)
-#     #
-#     # with open('syn_train_labels_1.pkl', 'wb') as output:
-#     #     pickle.dump(font_labels, output)
-#     print("Finished preprocessing.")
+    #     print(cropped_images["ACaslonPro-Bold"])
+    #     print()
+    #     print(cropped_images["ACaslonPro-Italic"])
+    # with open('syn_train_fonts_1.pkl', 'wb') as output:
+    #     pickle.dump(cropped_images, output)
+    #
+    # with open('syn_train_labels_1.pkl', 'wb') as output:
+    #     pickle.dump(font_labels, output)
+    # print("Finished preprocessing.")
 
 # def get_test():
 #     print("Running preprocessing...")
@@ -245,25 +284,27 @@ def process_unlabeled_real(root_dir):
 #     return cropped_images, big_array, font_labels
 #     print("done w test")
 
-def main():
+# def main():
     # our small sample test
+
     # create_pickle("real_test_sample")
     #
-    # pickled = open('scae_inputs.pkl', 'rb')
-    # array = pickle.load(pickled)
-    # pickled.close()
-    #
-    # count = 0
-    # for img in array:
-    #     final_image = img.convert("L")
-    #     image_file = "test_img/" +str(count) + "img.png"
-    #     final_image.save(image_file, format='PNG')
-    #     count += 1
-    #
-    # create_pickle("real_test_sample")
-    process_unlabeled_real("../../final_data/scrape-wtf-new")
-
-
-
-if __name__ == "__main__":
-    main()
+#     # pickled = open('scae_inputs.pkl', 'rb')
+#     # array = pickle.load(pickled)
+#     # pickled.close()
+#     #
+#     # count = 0
+#     # for img in array:
+#     #     final_image = img.convert("L")
+#     #     image_file = "test_img/" +str(count) + "img.png"
+#     #     final_image.save(image_file, format='PNG')
+#     #     count += 1
+#     #
+#     # create_pickle("real_test_sample")
+#     print("Start processing!")
+#     process_unlabeled_real("../../final_data/scrape-wtf-new")
+#
+#
+#
+# if __name__ == "__main__":
+#     main()

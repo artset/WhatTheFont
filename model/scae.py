@@ -81,8 +81,8 @@ class SCAE(tf.keras.Model):
 
         # Conv2D(64, (3, 3), activation='relu', padding='same')
         self.stride_size = 2
-        self.reshape = tf.keras.layers.Reshape((105, 105, 1))
-        self.conv_layer1 = Conv2D(filters=64, strides=self.stride_size, kernel_size=(3,3), activation='relu', padding='same', name='conv_layer1')
+        self.reshape = tf.keras.layers.Reshape((96, 96, 1))
+        self.conv_layer1 = Conv2D(input_shape=(96, 96,1), filters=64, strides=self.stride_size, kernel_size=(3,3), activation='relu', padding='same', name='conv_layer1')
         self.conv_layer2 = Conv2D(filters=128, strides=self.stride_size, kernel_size=(3,3), activation='relu', padding='same', name='conv_layer2')
         self.deconv_layer1 = Conv2DTranspose(filters=64, strides=self.stride_size, kernel_size=(3,3), activation='relu', padding='same', name='deconv_layer1')
         self.deconv_layer2 = Conv2DTranspose(filters=1, strides=self.stride_size, kernel_size=(3,3), activation='relu', padding='same', name='deconv_layer2')
@@ -91,23 +91,26 @@ class SCAE(tf.keras.Model):
     def call(self, inputs):
         inputs = self.reshape(inputs)
 
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        # print("inputs.shape", inputs.shape)
         c1 = self.conv_layer1(inputs)
-        print("c1 shape", c1.shape)
+        # print("c1 shape", c1.shape)
 #         c1 = tf.nn.max_pool(c1, [1, 2, 2 ,1], 2, self.padding) #? idk
         c2 = self.conv_layer2(c1)
-        print("c2 shape", c2.shape)
+        # print("c2 shape", c2.shape)
 
         d1 = self.deconv_layer1(c2)
-        print("d1 shape", d1.shape)
+        # print("d1 shape", d1.shape)
         # paper says unpool, we say not now
         d2 = self.deconv_layer2(d1)
         return d2
 
     def loss(self, original, decoded):
+        original = self.reshape(original)
         return tf.reduce_sum((original-decoded)**2) / original.shape[0]
 
 def train(model, images):
-    batches = images.shape[0] // model.batch_size
+    batches = len(images) // model.batch_size
 
     for i in range(batches):
         image_inputs = images[i * model.batch_size : (i+1) * model.batch_size]
@@ -116,19 +119,19 @@ def train(model, images):
             res = model(image_inputs)
             loss = model.loss(image_inputs, res)
 
-        gradient = tape.gradient(loss, model.trainable_variables)
+        gradients = tape.gradient(loss, model.trainable_variables)
         model.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
 
 def main():
 
-    dict, images, font_labels = get_train()
-    images = np.array(images)
+    images = get_train()
+    # images = np.array(images)
 
     # Initialize generator and discriminator models
     scae = SCAE()
 
     # For saving/loading models
-    checkpoint_dir = './checkpoints'
+    checkpoint_dir = './checkpoints_ae'
     checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
     checkpoint = tf.train.Checkpoint(scae = scae)
     manager = tf.train.CheckpointManager(checkpoint, checkpoint_dir, max_to_keep=3)

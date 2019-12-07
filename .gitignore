@@ -1,3 +1,13 @@
 #ignore her
 data/checkpoints_df
 data/checkpoints
+data/checkpoints_ae
+data/weights
+data/test_img
+data/syn_train_one_font
+data/scae_inputs.pkl
+data/scae_small_images.pkl
+data/test_inputs.pkl
+data/test_labels.pkl
+data/train_inputs.pkl
+data/train_labels.pkl
