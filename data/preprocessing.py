@@ -166,20 +166,35 @@ def create_pickle(root_dir):
     test_inputs = np.array(test_inputs)
     test_labels = np.array(test_labels)
 
-    with open('scae_synthetic_inputs.pkl', 'wb') as output:
-        pickle.dump(scae_inputs, output)
+    with h5py.File('scae_synthetic_inputs.hdf5', 'w') as f:
+         f.create_dataset('scae_inputs',data=scae_inputs)
 
-    with open('train_inputs.pkl', 'wb') as output:
-            pickle.dump(train_inputs, output)
+    with h5py.File('train_inputs.hdf5', 'w') as f:
+        f.create_dataset('train_inputs',data=train_inputs)
 
-    with open('test_inputs.pkl', 'wb') as output:
-        pickle.dump(test_inputs, output)
+    with h5py.File('train_labels.hdf5', 'w') as f:
+        f.create_dataset('train_labels',data=train_labels)
 
-    with open('train_labels.pkl', 'wb') as output:
-        pickle.dump(train_labels, output)
+    with h5py.File('test_inputs.hdf5', 'w') as f:
+        f.create_dataset('test_inputs',data=test_inputs)
 
-    with open('test_labels.pkl', 'wb') as output:
-        pickle.dump(test_labels, output)
+    with h5py.File('test_labels.hdf5', 'w') as f:
+        f.create_dataset('test_labels',data=test_labels)
+
+    # with open('scae_synthetic_inputs.pkl', 'wb') as output:
+    #     pickle.dump(scae_inputs, output)
+    #
+    # with open('train_inputs.pkl', 'wb') as output:
+    #         pickle.dump(train_inputs, output)
+    #
+    # with open('test_inputs.pkl', 'wb') as output:
+    #     pickle.dump(test_inputs, output)
+    #
+    # with open('train_labels.pkl', 'wb') as output:
+    #     pickle.dump(train_labels, output)
+    #
+    # with open('test_labels.pkl', 'wb') as output:
+    #     pickle.dump(test_labels, output)
 
     print("Finished preprocessing...")
 
