@@ -1,7 +1,7 @@
 import os
 from scipy import misc
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageFile
 import random
 import json
 import pickle
@@ -100,6 +100,12 @@ def create_font_dictionary():
         json.dump(dict, fp,  indent=4)
 
     #     #     pickle.dump(cropped_images, output)
+
+def get_font_dict():
+    with open('font_dict.json') as json_file:
+        font_dict = json.load(json_file)
+    return font_dict
+
 def create_pickle(root_dir):
     """ Input: Root directory (string)
         Output: Creates 5 pickle files to use for our model.
@@ -169,7 +175,13 @@ def create_pickle(root_dir):
 
     print("Finished preprocessing...")
 
-def process_single_pickle(root_dir):
+
+def process_single_pickle(root_dir, destination):
+    """
+    destination is the file path including the file name
+    to the stored pickled
+    """
+
     image_array = []
 
     for subdir in os.listdir(root_dir): # goes through all font folders
@@ -188,7 +200,7 @@ def process_single_pickle(root_dir):
 
     image_array = np.array(image_array)
 
-    with open('../data/scae_small_images.pkl', 'wb') as output:
+    with open(destination, 'wb') as output:
         pickle.dump(image_array, output)
 
 
@@ -246,6 +258,27 @@ def process_unlabeled_real(root_dir):
     # with open('scae_real_inputs.pkl', 'wb') as output:
     #     pickle.dump(scae_inputs, output)
     return
+
+def df_test_pickles():
+    """
+    function specifically to help run df_original on a small data set
+    """
+
+    process_single_pickle("../data/real_test_sample", "../data/df_sample_test_inputs.pkl")
+    process_single_pickle("../data/syn_train_one_font", "../data/df_sample_train_inputs.pkl")
+    train_labels = np.zeros(1000)
+    test_labels = np.zeros(1)
+
+    ti_pickle = open('../data/df_sample_test_inputs.pkl', 'rb')
+    test_inputs = pickle.load(ti_pickle)
+    ti_pickle.close()
+
+    tri_pickle = open('../data/df_sample_train_inputs.pkl', 'rb')
+    train_inputs = pickle.load(tri_pickle)
+    tri_pickle.close()
+
+    return train_inputs, train_labels, test_inputs, test_labels
+
 
 
 def get_train():

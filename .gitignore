@@ -11,3 +11,5 @@ data/test_inputs.pkl
 data/test_labels.pkl
 data/train_inputs.pkl
 data/train_labels.pkl
+data/df_sample_test_inputs.pkl
+data/df_sample_train_inputs.pkl

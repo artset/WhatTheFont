@@ -5,6 +5,9 @@ import tensorflow_hub as hub
 from collections import Counter
 import numpy as np
 
+import sys
+sys.path.append('../data')
+
 from imageio import imwrite
 import os
 import argparse
@@ -74,12 +77,12 @@ class DeepFont(tf.keras.Model): #is this how to convert to sequential?
 		# TODO: Define the model, loss, and optimizer
 		self.batch_size = 1
 		self.model = tf.keras.Sequential()
-		self.model.add(tf.keras.layers.Reshape((105, 105, 1)))
-		self.model.add(tf.keras.layers.Conv2D(filters=64, strides=(2,2), kernel_size=(3,3), padding='same', name='conv_layer1', input_shape=(105, 105,1))) #, input_shape=(args.batch_size,)
+		self.model.add(tf.keras.layers.Reshape((96, 96, 1)))
+		self.model.add(tf.keras.layers.Conv2D(trainable=False, filters=64, strides=(2,2), kernel_size=(3,3), padding='same', name='conv_layer1', input_shape=(105, 105,1))) #, input_shape=(args.batch_size,)
 		self.model.add(tf.keras.layers.BatchNormalization())
 		self.model.add(tf.keras.layers.MaxPooling2D(pool_size=(2,2), strides=None, padding='same'))
 
-		self.model.add(tf.keras.layers.Conv2D(filters=128, strides=(1,1), kernel_size=(3,3), padding='same', name='conv_layer2'))
+		self.model.add(tf.keras.layers.Conv2D(trainable=False, filters=128, strides=(1,1), kernel_size=(3,3), padding='same', name='conv_layer2'))
 		self.model.add(tf.keras.layers.BatchNormalization())
 		self.model.add(tf.keras.layers.MaxPooling2D(pool_size=(2,2), strides=None, padding='same'))
 
@@ -88,8 +91,8 @@ class DeepFont(tf.keras.Model): #is this how to convert to sequential?
 		self.model.add(tf.keras.layers.Conv2D(256, kernel_size=(3,3), strides=(1,1), padding='same'))
 
 		self.model.add(tf.keras.layers.Flatten())
-		self.model.add(tf.keras.layers.Dense(4096), activation='reLU')
-		self.model.add(tf.keras.layers.Dense(4096), activation='reLU')
+		self.model.add(tf.keras.layers.Dense(4096, activation='relu'))
+		self.model.add(tf.keras.layers.Dense(4096, activation='relu'))
 		self.model.add(tf.keras.layers.Dense(2383, activation='softmax'))
 
 		self.optimizer = tf.keras.optimizers.Adam(learning_rate = 0.01)
@@ -104,6 +107,7 @@ class DeepFont(tf.keras.Model): #is this how to convert to sequential?
 		:return: prescaled generated images, shape=[batch_size, height, width, channel]
 		"""
 		# TODO: Call the forward pass
+		print(inputs.shape)
 		return self.model(inputs)
 
 	@tf.function
@@ -182,6 +186,8 @@ def train(model, train_inputs, train_labels):
 
 			predictions = model.call(temp_inputs)
 			loss = model.loss_function(predictions, temp_train_labels)
+			if i % 100 == 0:
+				print("---Batch", i, " Loss: ", loss)
 		gradients = tape.gradient(loss, model.trainable_variables)
 		model.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
 
@@ -238,18 +244,19 @@ def main():
 	try:
 		# Specify an invalid GPU device
 		with tf.device('/device:' + args.device):
+			train_inputs, train_labels, test_inputs, test_labels = df_test_pickles()
 			if args.mode == 'train':
-				dict, images, font_labels = get_train()
-				images = np.array(images)
+				# images = get_train()
+				# images = np.array(images)
+
 				for epoch in range(0, args.num_epochs):
 					print('========================== EPOCH %d  ==========================' % epoch)
-					train(model, images, font_labels)
+					train(model, train_inputs, train_labels)
 					# Save at the end of the epoch, too
 					print("**** SAVING CHECKPOINT AT END OF EPOCH ****")
 					manager.save()
 			if args.mode == 'test':
-				test_dict, test_images, test_labels = get_test()
-				print("--test accuracy--", test(model, test_images, test_labels))
+				print("--test accuracy--", test(model, test_inputs, test_labels))
 	except RuntimeError as e:
 		print(e)
 
