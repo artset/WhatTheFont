@@ -89,7 +89,7 @@ def alter_image(image_path):
     # final_image.save("test1.png", format='PNG')
 
 def create_font_dictionary():
-    path = "./fontlist.txt"
+    path = "./150_fonts.txt"
 
     f = open(path, 'r')
     content = f.read().split()
@@ -97,9 +97,9 @@ def create_font_dictionary():
     count = 1
     for line in content:
         print(line)
-        dict[line] = count
+        dict[line] = ""
         count += 1
-    with open('font_dict.json', 'w') as fp:
+    with open('150_fonts.json', 'w') as fp:
         json.dump(dict, fp,  indent=4)
 
     #     #     pickle.dump(cropped_images, output)
@@ -126,34 +126,38 @@ def create_pickle(root_dir):
     with open('font_dict.json') as json_file:
         font_dict = json.load(json_file)
 
+    with open('150_fonts.json') as json_file:
+        font_subset = json.load(json_file)
+
     for subdir in os.listdir(root_dir): # goes through all font folders
-        subdir_path = root_dir + "/" + subdir
-        font_name = subdir
+        if subdir in font_subset:
+            subdir_path = root_dir + "/" + subdir
+            font_name = subdir
 
-        # here, we have to split up our files into the three pixels
-        file_count = 0
-        for file in os.listdir(subdir_path): # goes through all sample images
+            # here, we have to split up our files into the three pixels
+            file_count = 0
+            for file in os.listdir(subdir_path): # goes through all sample images
 
-            image_path = subdir_path + "/" + file
-            image = alter_image(image_path)
+                image_path = subdir_path + "/" + file
+                image = alter_image(image_path)
 
-            image = resize_image(image, 96)
-            cropped_images = generate_crop(image, 96, 15)
+                image = resize_image(image, 96)
+                cropped_images = generate_crop(image, 96, 15)
 
-            if file_count < 100:
-                for c in cropped_images:
-                    scae_inputs.append(c)
+                if file_count < 100:
+                    for c in cropped_images:
+                        scae_inputs.append(c)
 
-            elif file_count < 200:
-                for c in cropped_images:
-                    test_inputs.append(c)
-                test_labels.append(font_dict[font_name])
-            else:
-                for c in cropped_images:
-                    train_inputs.append(c)
-                train_labels.append(font_dict[font_name])
+                elif file_count < 200:
+                    for c in cropped_images:
+                        test_inputs.append(c)
+                    test_labels.append(font_dict[font_name])
+                else:
+                    for c in cropped_images:
+                        train_inputs.append(c)
+                    train_labels.append(font_dict[font_name])
 
-            file_count += 1
+                file_count += 1
 
     scae_inputs = np.array(scae_inputs)
     train_inputs = np.array(train_inputs)
@@ -321,7 +325,6 @@ def df_test_pickles():
     return train_inputs, train_labels, test_inputs, test_labels
 
 
-
 def get_train():
     print("Running preprocessing...")
     # root_dir = 'C:/Users/katsa/Documents/cs/cs1470/real_images/VFR_real_test' #Katherine's file path
@@ -382,5 +385,8 @@ def get_train():
 #
 #
 #
-# if __name__ == "__main__":
-#     main()
+
+def main():
+    create_font_dictionary()
+if __name__ == "__main__":
+    main()
