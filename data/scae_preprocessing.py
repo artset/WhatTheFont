@@ -7,6 +7,7 @@ import json
 import pickle
 import cv2
 import imageio
+import h5py
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
@@ -194,12 +195,12 @@ def process_unlabeled_real(root_dir):
 
     print("Starting processing of unlabeled real...")
     count = 0
-    pickle_count = 1
-    num_images = 5000 # number of images in each pickle
-    # files = [f.path for f in os.scandir(root_dir) if f.name.endswith(".jpg") or f.name.endswith(".png")]
 
+    # files = [f.path for f in os.scandir(root_dir) if f.name.endswith(".jpg") or f.name.endswith(".png")]
     for f in os.scandir(root_dir):
-        if f.name.endswith(".jpeg") or f.name.endswith(".jpg") or f.name.endswith(".png"):
+
+        if count % 13 == 0 and f.name.endswith(".jpeg") or f.name.endswith(".jpg") or f.name.endswith(".png"):
+
             image_path = f.path
 
             image = alter_image(image_path)
@@ -213,22 +214,12 @@ def process_unlabeled_real(root_dir):
 
             for c in cropped_images:
                 scae_inputs.append(c)
+        count += 1
 
-            if count % num_images == 0 and count > 0:
-                pickle_path = 'scae_real_inputs' + str(pickle_count) + '.pkl'
-                with open(pickle_path, 'wb') as output:
-                    pickle.dump(scae_inputs, output)
-                print("Finished the", pickle_count," batch of pickles")
-                pickle_count +=1
-                scae_inputs = []
+    print("Number of images in file: ", len(scae_inputs))
+    with h5py.File('scae_real_inputs.hdf5', 'w') as f:
+         f.create_dataset('scae',data=scae_inputs)
 
-            count += 1
-
-    if len(scae_inputs) > 0:
-        pickle_path = 'scae_real_inputs' + str(pickle_count) + '.pkl'
-        with open(pickle_path, 'wb') as output:
-            pickle.dump(scae_inputs, output)
-        print("----Last batch of pickle contains", len(scae_inputs), " images")
 
 
     # for file in os.listdir(root_dir): # goes through all font folders
@@ -276,8 +267,8 @@ def main():
     #
     # create_pickle("real_test_sample")
     print("Start processing!")
-    # process_unlabeled_real("./scrape-wtf-new")
-    process_unlabeled_real("./syn_train_one_font/ACaslonPro-Bold")
+    process_unlabeled_real("./scrape-wtf-new")
+    # process_unlabeled_real("./syn_train_one_font/ACaslonPro-Bold")
 
 
 
