@@ -156,8 +156,8 @@ def main():
         # Specify an invalid GPU device
         with tf.device('/device:' + args.device):
             if args.mode == 'train':
-                real_images, fake_images = combine_real_synth_for_scae()
-                # real_images, fake_images = test_scae()
+                # real_images, fake_images = combine_real_synth_for_scae()
+                real_images, fake_images = test_scae()
                 for epoch in range(0, args.num_epochs):
                     print('========================== EPOCH %d  ==========================' % epoch)
                     train(scae, real_images, fake_images)

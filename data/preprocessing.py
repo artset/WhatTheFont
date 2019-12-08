@@ -105,6 +105,22 @@ def create_font_dictionary():
 
     #     #     pickle.dump(cropped_images, output)
 
+def create_total_font_dictionary():
+    path = "./fontlist.txt"
+
+    f = open(path, 'r')
+    content = f.read().split()
+    dict = {}
+    count = 1
+    for line in content:
+        print(line)
+        dict[line] = count
+        count += 1
+    with open('font_dict.json', 'w') as fp:
+        json.dump(dict, fp,  indent=4)
+
+    #     #     pickle.dump(cropped_images, output)
+
 def get_font_dict():
     with open('font_dict.json') as json_file:
         font_dict = json.load(json_file)
@@ -130,7 +146,9 @@ def create_hdf5(root_dir):
     with open('150_fonts.json') as json_file:
         font_subset = json.load(json_file)
 
+    total_folder_count  = 0 
     for subdir in os.listdir(root_dir): # goes through all font folders
+        
         if subdir in font_subset:
             subdir_path = root_dir + "/" + subdir
             font_name = subdir
@@ -138,7 +156,7 @@ def create_hdf5(root_dir):
             # here, we have to split up our files into the three pixels
             file_count = 0
             for file in os.listdir(subdir_path): # goes through all sample images
-
+                
                 image_path = subdir_path + "/" + file
                 image = alter_image(image_path)
 
@@ -152,13 +170,17 @@ def create_hdf5(root_dir):
                 elif file_count < 200:
                     for c in cropped_images:
                         test_inputs.append(c)
-                    test_labels.append(font_dict[font_name])
+                        test_labels.append(font_dict[font_name])
                 else:
                     for c in cropped_images:
                         train_inputs.append(c)
-                    train_labels.append(font_dict[font_name])
+                        train_labels.append(font_dict[font_name])
 
                 file_count += 1
+
+        if total_folder_count % 100 == 0:
+            print(total_folder_count, "files done")
+        total_folder_count += 1
 
     scae_inputs = np.array(scae_inputs)
     train_inputs = np.array(train_inputs)
@@ -323,7 +345,7 @@ def df_modified_test_pickles():
     process_single_pickle("../data/syn_train_one_font", "../data/df_sample_train_inputs_uncropped.pkl", False)
 
     train_labels = np.zeros(1000)
-    test_labels = np.zeros(1)
+    test_labels = np.transpose(np.zeros(1))
 
     ti_pickle = open('../data/df_sample_test_inputs_uncropped.pkl', 'rb')
     test_inputs = pickle.load(ti_pickle)
@@ -344,8 +366,9 @@ def df_test_pickles():
 
     process_single_pickle("../data/real_test_sample", "../data/df_sample_test_inputs.pkl", True)
     process_single_pickle("../data/syn_train_one_font", "../data/df_sample_train_inputs.pkl", True)
-    train_labels = np.zeros(1000)
-    test_labels = np.zeros(1)
+    train_labels = np.zeros((1,1000))
+    test_labels = np.zeros(10)
+
 
     ti_pickle = open('../data/df_sample_test_inputs.pkl', 'rb')
     test_inputs = pickle.load(ti_pickle)
@@ -417,7 +440,8 @@ def get_train():
 #     process_unlabeled_real("../../final_data/scrape-wtf-new")
 
 def main():
-    create_hdf5()
+    create_hdf5('./syn_train')
+    # create_total_font_dictionary()
 
 if __name__ == "__main__":
     main()
