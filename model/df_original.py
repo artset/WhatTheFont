@@ -13,6 +13,8 @@ import os
 import argparse
 from preprocessing import *
 
+#HI ITS MAGGIE PLZ RUN
+
 # Killing optional CPU driver warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
@@ -93,7 +95,7 @@ class DeepFont(tf.keras.Model): #is this how to convert to sequential?
 		self.model.add(tf.keras.layers.Flatten())
 		self.model.add(tf.keras.layers.Dense(4096, activation='relu'))
 		self.model.add(tf.keras.layers.Dense(4096, activation='relu'))
-		self.model.add(tf.keras.layers.Dense(2383, activation='softmax'))
+		self.model.add(tf.keras.layers.Dense(2383))
 
 		self.optimizer = tf.keras.optimizers.Adam(learning_rate = 0.01)
 
@@ -142,27 +144,29 @@ class DeepFont(tf.keras.Model): #is this how to convert to sequential?
 	# 	return 0
 
 	# @tf.function
-	def total_accuracy(self, probs, labels):
-		"""  given a batch of images ( 15 x batch_size), compute accuracy over those images
+	def total_accuracy(self, logits, labels):
+		"""  given a batch of images [(batch_size * cropped_img) x num_classes]
+			 labels = 
+			 and the outputted logits, computes accuracy
 		"""
 		print("----------total accuracy ----------")
-		total_accuracy = 0
-		print(len(probs))
-		for i in range(0, len(probs), 15):
-			# total_accuracy += self.single_image_accuracy(probs[i:i+ 15], labels[i])
-			single_image_probs  = probs[i: i+15]
-			single_image_labels = labels[i]
 
-			predictions = []
-			for j in range(len(probs)):
-				predictions.append(np.argmax(single_image_probs[i]))
+		acc = 0 
 
-			tracker = Counter(predictions)
-			print(tracker)
-			if (max(tracker, key = tracker.get) == single_image_labels):
-				total_accuracy += 1
+		print("input to reshape", logits)
+		sums = self.reshape_test(logits) # batch_size x cropped_img x num_classes
 
-		return total_accuracy / float(len(probs)/15)
+		sums = np.sum(predictions, axis = 1) # sums the columns of the logits
+
+		probabilities = tf.nn.softmax(sums) # batchsize x num_classes
+
+		top_five = np.argsort(probabilities, axis = 1)[:][-5:]
+
+		for i in range in (len(labels)):
+			if labels[i] in top_five[i]:
+				acc += 1
+
+		return acc / float(len(labels))
 
 
 
@@ -201,15 +205,15 @@ def test(model, test_inputs, test_labels):
 	:return: None
 	"""
 	# 4 batches with one image in each batch_inputs
-	num_batches = len(test_inputs) // (model.batch_size * 15)
-	cropped_images = 15
+	num_batches = len(test_inputs) // (model.batch_size * 10)
+	cropped_images = 10
 
 	acc = 0
 
 
 	for i in range(num_batches): # hardcode 15 because each i is an image
 		# print("-------------batch", i, "-------------")
-		batch_inputs = test_inputs[i * model.batch_size * cropped_images: (i+1) * model.batch_size * cropped_images]
+		batch_inputs = test_inputs[i * model.batch_size: (i+1) * model.batch_size ]
 		batch_labels = test_labels[i * model.batch_size : (i+1) * model.batch_size]
 
 		predictions = model.call(batch_inputs) # prediction for a single image
