@@ -169,9 +169,9 @@ def create_pickle(root_dir):
             pickle.dump(test_labels, output)
         print("Finished preprocessing...")
 
-def get_data(root):
+def get_data(file_path):
     """
-    Input: Root directory of Data
+    Input: File path of Data
     Output: Arrays for
     1) Input images to SCAE
     2) Input train images & labels for DF Model
@@ -180,7 +180,7 @@ def get_data(root):
     This function is called in the model to open the pickle.
     """
     print("Opening hdf5 data...")
-    with h5py.File('scae_real_inputs.h5', 'r') as hf:
+    with h5py.File(file_path, 'r') as hf:
         data = hf['scae'][:]
 
     print("Finished opening hdf5 data...")

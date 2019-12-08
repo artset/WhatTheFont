@@ -124,7 +124,7 @@ def train(model, images):
 
 def main():
 
-    images = get_data()
+    images = get_data('scae_real_inputs.h5')
     # images = np.array(images)
 
     # Initialize generator and discriminator models
