@@ -124,7 +124,7 @@ def train(model, images):
 
 def main():
 
-    images = get_train()
+    images = get_data()
     # images = np.array(images)
 
     # Initialize generator and discriminator models

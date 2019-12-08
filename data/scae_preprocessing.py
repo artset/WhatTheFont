@@ -179,10 +179,12 @@ def get_data(root):
 
     This function is called in the model to open the pickle.
     """
-    print("Opening pickled data...")
+    print("Opening hdf5 data...")
+    with h5py.File('scae_real_inputs.h5', 'r') as hf:
+        data = hf['scae'][:]
 
-
-    print("Finished opening pickled data...")
+    print("Finished opening hdf5 data...")
+    return data
 
 def process_unlabeled_real(root_dir):
     """ Input: Root directory (string)
