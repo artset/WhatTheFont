@@ -13,6 +13,8 @@ import os
 import argparse
 from preprocessing import *
 
+#HI ITS MAGGIE PLZ RUN
+
 # Killing optional CPU driver warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
@@ -219,7 +221,6 @@ def test(model, test_inputs, test_labels):
 	for i in range(num_batches): # hardcode 15 because each i is an image
 		# print("-------------batch", i, "-------------")
 		batch_inputs = test_inputs[i * model.batch_size : (i+1) * model.batch_size ]
-
 		batch_labels = test_labels[i * model.batch_size : (i+1) * model.batch_size]
 
 		logits = model.call(batch_inputs) # predictions for a batch of : [batch size x 2383]

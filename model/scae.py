@@ -114,6 +114,8 @@ def train(model, real_images, fake_images):
     fake_batch = len(fake_images) // iterations
     real_batch = len(real_images) // iterations
 
+    total_loss = 0
+
     for i in range(iterations):
         # image_inputs = images[i * model.batch_size : (i+1) * model.batch_size]
         real_inputs = real_images[i * real_batch : (i+1) * real_batch]
@@ -124,12 +126,17 @@ def train(model, real_images, fake_images):
         with tf.GradientTape() as tape:
             res = model(inputs)
             loss = model.loss(inputs, res)
+        total_loss += loss
 
         if (i % 100 == 0):
             print("loss", loss)
 
         gradients = tape.gradient(loss, model.trainable_variables)
         model.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+
+    total_loss = total_loss / float(iterations)
+
+    print("AVERAGE LOSS THIS EPOCH", total_loss)
 
 def main():
 
