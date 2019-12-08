@@ -210,18 +210,19 @@ def process_unlabeled_real(root_dir):
     # files = [f.path for f in os.scandir(root_dir) if f.name.endswith(".jpg") or f.name.endswith(".png")]
     for f in os.scandir(root_dir):
 
-        if count % 13 == 0 and f.name.endswith(".jpeg") or f.name.endswith(".jpg") or f.name.endswith(".png"):
+        if count % 13 == 0 and (f.name.endswith(".jpeg") or f.name.endswith(".jpg") or f.name.endswith(".png")):
 
             image_path = f.path
 
             image = alter_image(image_path)
             image = resize_image(image, 96)
 
-            if count % 2000 == 0:
-                # image.save("./imgs/" + count_str + ".png", "PNG")
+            if count % 13000 == 0:
+                count_str = str(count)
+                image.save("./imgs/" + count_str + ".png", "PNG")
                 print( "Images preprocessed: ", count)
 
-            cropped_images = generate_crop(image, 96, 15)
+            cropped_images = generate_crop(image, 96, 10)
 
             for c in cropped_images:
                 scae_inputs.append(c)
