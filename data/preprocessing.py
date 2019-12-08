@@ -79,7 +79,7 @@ def alter_image(image_path):
     affined_image = cv2.warpAffine(affined_image, M_rotate, (cols, rows))
     # perhaps we can pick the top right corner pixel color and fill the bg
     # but if its synthetic, then we can just make samples of White Text on Brack background
-    #
+
     # shading
     affined_image = np.array(affined_image) * random.uniform(0.2, 1.5)
     affined_image = np.clip(affined_image, 0, 255)
@@ -110,7 +110,7 @@ def get_font_dict():
         font_dict = json.load(json_file)
     return font_dict
 
-def create_pickle(root_dir):
+def create_hdf5(root_dir):
     """ Input: Root directory (string)
         Output: Creates 5 pickle files to use for our model.
         1) Train inputs for SCAE
@@ -143,7 +143,7 @@ def create_pickle(root_dir):
                 image = alter_image(image_path)
 
                 image = resize_image(image, 96)
-                cropped_images = generate_crop(image, 96, 15)
+                cropped_images = generate_crop(image, 96, 10)
 
                 if file_count < 100:
                     for c in cropped_images:
@@ -167,7 +167,7 @@ def create_pickle(root_dir):
     test_labels = np.array(test_labels)
 
     with h5py.File('scae_synthetic_inputs.hdf5', 'w') as f:
-         f.create_dataset('scae_inputs',data=scae_inputs)
+         f.create_dataset('scae_synthetic_inputs',data=scae_inputs)
 
     with h5py.File('train_inputs.hdf5', 'w') as f:
         f.create_dataset('train_inputs',data=train_inputs)
@@ -241,8 +241,12 @@ def process_single_pickle(root_dir, destination, if_cropped):
     with open(destination, 'wb') as output:
         pickle.dump(image_array, output)
 
+def get_data_for_scae():
+    with h5py.File('scae_synthetic_inputs.hdf5', 'r') as hf:
+        scae_synthetic_inputs = hf['scae_synthetic_inputs'][:]
+    return scae_synthetic_inputs
 
-def get_data(root):
+def get_data():
     """
     Input: Root directory of Data
     Output: Arrays for
@@ -252,10 +256,23 @@ def get_data(root):
 
     This function is called in the model to open the pickle.
     """
-    print("Opening pickled data...")
+    print("Opening hdm5 data...")
 
 
-    print("Finished opening pickled data...")
+    with h5py.File('train_inputs.hdf5', 'r') as hf:
+        train_inputs = hf['train_inputs'][:]
+
+    with h5py.File('train_labels.hdf5', 'r') as hf:
+        train_labels = hf['train_labels'][:]
+
+    with h5py.File('test_inputs.hdf5', 'r') as hf:
+        test_inputs = hf['test_inputs'][:]
+
+    with h5py.File('test_labels.hdf5', 'r') as hf:
+        test_inputs = hf['test_labels'][:]
+
+    print("Finished opening hdm5 data...")
+    return train_inputs, train_labels, test_inputs, test_labels
 
 def process_unlabeled_real(root_dir):
     """ Input: Root directory (string)
@@ -398,11 +415,9 @@ def get_train():
 #     # create_pickle("real_test_sample")
 #     print("Start processing!")
 #     process_unlabeled_real("../../final_data/scrape-wtf-new")
-#
-#
-#
 
 def main():
-    create_font_dictionary()
+    create_hdf5()
+
 if __name__ == "__main__":
     main()

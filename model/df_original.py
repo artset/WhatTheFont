@@ -244,7 +244,7 @@ def main():
 	try:
 		# Specify an invalid GPU device
 		with tf.device('/device:' + args.device):
-			train_inputs, train_labels, test_inputs, test_labels = df_test_pickles()
+			train_inputs, train_labels, test_inputs, test_labels = get_data()
 			if args.mode == 'train':
 				# images = get_train()
 				# images = np.array(images)

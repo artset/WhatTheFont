@@ -6,7 +6,7 @@ import tensorflow_hub as hub
 import sys
 sys.path.append('../data')
 
-from preprocessing import *
+from scae_preprocessing import *
 import numpy as np
 
 from imageio import imwrite
@@ -109,22 +109,31 @@ class SCAE(tf.keras.Model):
         original = self.reshape(original)
         return tf.reduce_sum((original-decoded)**2) / original.shape[0]
 
-def train(model, images):
-    batches = len(images) // model.batch_size
+def train(model, real_images, fake_images):
+    iterations = (len(real_images) + len(fake_images)) // model.batch_size
+    fake_batch = len(fake_images) // iterations
+    real_batch = len(real_images) // iterations
 
-    for i in range(batches):
-        image_inputs = images[i * model.batch_size : (i+1) * model.batch_size]
+    for i in range(iterations):
+        # image_inputs = images[i * model.batch_size : (i+1) * model.batch_size]
+        real_inputs = real_images[i * real_batch : (i+1) * real_batch]
+        fake_inputs = fake_images[i * fake_batch : (i+1) * fake_batch]
+
+        inputs = np.concatenate((real_inputs, fake_inputs), axis=0)
 
         with tf.GradientTape() as tape:
-            res = model(image_inputs)
-            loss = model.loss(image_inputs, res)
+            res = model(inputs)
+            loss = model.loss(inputs, res)
+
+        if (i % 100 == 0):
+            print("loss", loss)
 
         gradients = tape.gradient(loss, model.trainable_variables)
         model.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
 
 def main():
 
-    images = get_data('scae_real_inputs.h5')
+    # images = get_data('scae_real_inputs.h5')
     # images = np.array(images)
 
     # Initialize generator and discriminator models
@@ -147,9 +156,11 @@ def main():
         # Specify an invalid GPU device
         with tf.device('/device:' + args.device):
             if args.mode == 'train':
+                real_images, fake_images = combine_real_synth_for_scae()
+                # real_images, fake_images = test_scae()
                 for epoch in range(0, args.num_epochs):
                     print('========================== EPOCH %d  ==========================' % epoch)
-                    train(scae, images)
+                    train(scae, real_images, fake_images)
                     print("**** SAVING CHECKPOINT AT END OF EPOCH ****")
                     manager.save()
                     scae.save_weights('./weights/weights.h5')

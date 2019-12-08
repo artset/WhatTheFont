@@ -169,6 +169,15 @@ def create_pickle(root_dir):
             pickle.dump(test_labels, output)
         print("Finished preprocessing...")
 
+def combine_real_synth_for_scae():
+    with h5py.File('scae_synthetic_inputs.hdf5', 'r') as synth, h5py.File('scae_real_inputs.hdf5', 'r') as real:
+        synth_data = synth['scae_synthetic_inputs'][:]
+        real_data = real['scae'][:]
+
+    return real_data, synth_data
+
+
+
 def get_data(file_path):
     """
     Input: File path of Data
@@ -223,6 +232,9 @@ def process_unlabeled_real(root_dir):
          f.create_dataset('scae',data=scae_inputs)
 
 
+# def test_scae():
+#     test = pickle.load(open("../data/scae_real_inputs1.pkl", 'rb'))
+#     return test, test
 
     # for file in os.listdir(root_dir): # goes through all font folders
     #     print(file)
