@@ -229,7 +229,7 @@ def main():
 
 
 	model = DeepFont()
-	model.load_weights('./weights/weights.h5', by_name=True)
+	model.load_weights('weights_2.h5', by_name=True)
 
 	# For saving/loading models
 	checkpoint_dir = './checkpoints_df'
