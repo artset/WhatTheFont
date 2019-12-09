@@ -7,6 +7,8 @@ import json
 import pickle
 import cv2
 import h5py
+import tensorflow as tf
+
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
