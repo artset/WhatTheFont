@@ -243,8 +243,7 @@ def main():
 		with tf.device('/device:' + args.device):
 			train_inputs, train_labels, test_inputs, test_labels = get_data()
 			if args.mode == 'train':
-				# images = get_train()
-				# images = np.array(images)
+				train_labels = relabel_labels(train_labels)
 
 				for epoch in range(0, args.num_epochs):
 					print('========================== EPOCH %d  ==========================' % epoch)
@@ -253,6 +252,7 @@ def main():
 					print("**** SAVING CHECKPOINT AT END OF EPOCH ****")
 					manager.save()
 			if args.mode == 'test':
+				test_labels = relabel_labels(test_labels)
 				print("--test accuracy--", test(model, test_inputs, test_labels))
 	except RuntimeError as e:
 		print(e)
