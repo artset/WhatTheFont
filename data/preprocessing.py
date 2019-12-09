@@ -23,6 +23,7 @@ def resize_image(image, image_dimension):
     wsize = int((float(img.size[0])*float(height_percent)))
     # print("Width", wsize)
     img = img.resize((wsize, base_height),Image.ANTIALIAS )
+
     return img
 
 
@@ -42,6 +43,10 @@ def generate_crop(img, image_dimension, num_vals):
             new_img = img.crop((bounds[i], 0, bounds[i] + image_dimension, image_dimension))
             new_img = np.array(new_img) / 255.0
 
+            # for row in new_img:
+            #     for num in row:
+            #         if num < 0:
+            #             print(num)
             cropped_images.append(new_img)
     return cropped_images
 
@@ -54,6 +59,7 @@ def alter_image(image_path):
     img = Image.open(image_path)
     img = img.convert("L") #convert image to grey scale
     img = np.array(img)
+
     # noise
     row, col = img.shape
     gauss = np.random.normal(0, 3, (row, col))
@@ -84,9 +90,10 @@ def alter_image(image_path):
 
     # shading
     affined_image = np.array(affined_image) * random.uniform(0.2, 1.5)
-    affined_image = np.clip(affined_image, 0, 255)
-
+    affined_image = np.clip(affined_image, 0, 255).astype(np.uint8)
     final_image = Image.fromarray(affined_image)
+
+
     return final_image
     # final_image = final_image.convert("L")
     # final_image.save("test1.png", format='PNG')
@@ -97,7 +104,7 @@ def create_font_dictionary():
     f = open(path, 'r')
     content = f.read().split()
     dict = {}
-    count = 1
+    count = 0
     for line in content:
         print(line)
         dict[line] = count
@@ -145,6 +152,42 @@ def get_font_dict():
         font_dict = json.load(json_file)
     return font_dict
 
+def process_unlabeled_real(root_dir):
+    """ Input: Root directory (string)
+        1) Train inputs for SCAEd
+    """
+    scae_inputs = []
+
+    print("Starting processing of unlabeled real...")
+    count = 0
+
+    # files = [f.path for f in os.scandir(root_dir) if f.name.endswith(".jpg") or f.name.endswith(".png")]
+    for f in os.scandir(root_dir):
+
+        if count % 13 == 0 and (f.name.endswith(".jpeg") or f.name.endswith(".jpg") or f.name.endswith(".png")):
+
+            image_path = f.path
+
+            image = alter_image(image_path)
+            image = resize_image(image, 96)
+
+            if count % 13000 == 0:
+                count_str = str(count)
+                # image.save("./imgs/" + count_str + ".png", "PNG")
+                print( "Images preprocessed: ", count)
+
+            cropped_images = generate_crop(image, 96, 10)
+
+            for c in cropped_images:
+                scae_inputs.append(c)
+        count += 1
+
+    print("Number of images in file: ", len(scae_inputs))
+    with h5py.File('scae_real_inputs_fixed.hdf5', 'w') as f:
+         f.create_dataset('scae',data=scae_inputs)
+
+
+
 def create_hdf5(root_dir):
     """ Input: Root directory (string)
         Output: Creates 5 pickle files to use for our model.
@@ -167,6 +210,7 @@ def create_hdf5(root_dir):
 
     total_folder_count  = 0 
     for subdir in os.listdir(root_dir): # goes through all font folders
+        print(subdir)
         
         if subdir in font_subset:
             subdir_path = root_dir + "/" + subdir
@@ -180,7 +224,10 @@ def create_hdf5(root_dir):
                 image = alter_image(image_path)
 
                 image = resize_image(image, 96)
+                # print(np.array(image))
                 cropped_images = generate_crop(image, 96, 10)
+
+                # print(cropped_images)
 
                 if file_count < 100:
                     for c in cropped_images:
@@ -198,8 +245,9 @@ def create_hdf5(root_dir):
                 file_count += 1
 
         if total_folder_count % 100 == 0:
-            print(total_folder_count, "files done")
+            print(total_folder_count, "folders done")
         total_folder_count += 1
+
 
     scae_inputs = np.array(scae_inputs)
     train_inputs = np.array(train_inputs)
@@ -207,101 +255,77 @@ def create_hdf5(root_dir):
     test_inputs = np.array(test_inputs)
     test_labels = np.array(test_labels)
 
-    with h5py.File('scae_synthetic_inputs.hdf5', 'w') as f:
-         f.create_dataset('scae_synthetic_inputs',data=scae_inputs)
+    shuffle_and_save(train_inputs, "train_inputs", train_labels, "train_labels", 5)
+    shuffle_and_save(test_inputs, "test_inputs", test_labels, "test_labels", 10)
+    shuffle_and_save_scae(scae_inputs, "scae_inputs")
 
-    with h5py.File('train_inputs.hdf5', 'w') as f:
-        f.create_dataset('train_inputs',data=train_inputs)
 
-    with h5py.File('train_labels.hdf5', 'w') as f:
-        f.create_dataset('train_labels',data=train_labels)
+    # with h5py.File('scae_synthetic_inputs.hdf5', 'w') as f:
+    #      f.create_dataset('scae_synthetic_inputs',data=scae_inputs)
 
-    with h5py.File('test_inputs.hdf5', 'w') as f:
-        f.create_dataset('test_inputs',data=test_inputs)
+    # with h5py.File('train_inputs.hdf5', 'w') as f:
+    #     f.create_dataset('train_inputs',data=train_inputs)
 
-    with h5py.File('test_labels.hdf5', 'w') as f:
-        f.create_dataset('test_labels',data=test_labels)
+    # with h5py.File('train_labels.hdf5', 'w') as f:
+    #     f.create_dataset('train_labels',data=train_labels)
 
-    # with open('scae_synthetic_inputs.pkl', 'wb') as output:
-    #     pickle.dump(scae_inputs, output)
-    #
-    # with open('train_inputs.pkl', 'wb') as output:
-    #         pickle.dump(train_inputs, output)
-    #
-    # with open('test_inputs.pkl', 'wb') as output:
-    #     pickle.dump(test_inputs, output)
-    #
-    # with open('train_labels.pkl', 'wb') as output:
-    #     pickle.dump(train_labels, output)
-    #
-    # with open('test_labels.pkl', 'wb') as output:
-    #     pickle.dump(test_labels, output)
+    # with h5py.File('test_inputs.hdf5', 'w') as f:
+    #     f.create_dataset('test_inputs',data=test_inputs)
+
+    # with h5py.File('test_labels.hdf5', 'w') as f:
+    #     f.create_dataset('test_labels',data=test_labels)
 
     print("Finished preprocessing...")
 
-
-def process_single_pickle(root_dir, destination, if_cropped):
-    """
-    destination is the file path including the file name
-    to the stored pickled
-
-    if_cropped can be set to false for the df_modified to receive unmodified images.
-    """
-
-    image_array = []
-
-    for subdir in os.listdir(root_dir): # goes through all font folders
-        subdir_path = root_dir + "/" + subdir
-
-        for file in os.listdir(subdir_path): # goes through all sample images
-
-            image_path = subdir_path + "/" + file
-            image = alter_image(image_path)
-
-            if if_cropped:
-                image = resize_image(image, 96)
-
-                cropped_images = generate_crop(image, 96, 15)
-
-                for c in cropped_images:
-                    image_array.append(c)
-            else:
-                image = np.array(image)
-                # I HAVE NO IDEA WHY THIS WORKS.
-                if image.shape[0] % 2 != 1:
-                    image = image[1:][:]
-
-                if image.shape[1] % 2 != 1:
-                    image = image[:][1:]
-                image_array.append(image)
-
-
-    if if_cropped:
-        image_array = np.array(image_array)
-
-    with open(destination, 'wb') as output:
-        pickle.dump(image_array, output)
-
-def shuffle_data_for_test(test_inputs, test_labels):
-    print(len(data))
-    temp = list(range(len(test_inputs)//10))
-    random.shuffle(temp)
+def shuffle_and_save(inputs, inputs_file_name, labels, labels_file_name, shuffle_size):
+    
+    temp = list(range(len(test_inputs)//shuffle_size)) # list with all the indices of test_inputs divided by ten?
+    random.shuffle(temp) #
     test_inputs_copy = test_inputs[:]
     test_labels_copy = test_labels[:]
 
     for i, j in enumerate(temp):
         if not i == j:
-            test_inputs_copy[i*10],test_inputs_copy[(i*10)+1] = test_inputs[j*10],test_inputs[(j*10)+1]
-            test_labels_copy[i*10],test_labels_copy[(i*10)+1] = test_labels[j*10],test_labels[(j*10)+1]
+            test_inputs_copy[i*shuffle_size],test_inputs_copy[(i*shuffle_size)+1] = test_inputs[j*shuffle_size],test_inputs[(j*shuffle_size)+1]
+            test_labels_copy[i*shuffle_size],test_labels_copy[(i*shuffle_size)+1] = test_labels[j*shuffle_size],test_labels[(j*shuffle_size)+1]
 
-    return test_inputs_copy, test_labels_copy
+    with h5py.File(inputs_file_name + '.hdf5', 'w') as f:
+        f.create_dataset(inputs_file_name,data=test_inputs_copy)
 
-def shuffle_data_for_train(train_inputs, train_labels):
-    indices = tf.range(len(train_inputs))
+    with h5py.File(labels_file_name + '.hdf5', 'w') as f:
+        f.create_dataset(labels_file_name,data=test_labels_copy)
+
+
+def shuffle_and_save_scae(inputs, inputs_file_name):
+    indices = tf.range(len(inputs))
     tf.random.shuffle(indices)
-    tf.gather(train_inputs, indices)
-    tf.gather(train_labels, indices)
-    return train_inputs, train_labels
+    tf.gather(inputs, indices)
+    tf.gather(inputs, indices)
+
+    with h5py.File(inputs_file_name + '.hdf5', 'w') as f:
+         f.create_dataset('inputs_file_name',data=inputs)
+
+
+# def shuffle_data_for_test(test_inputs, test_labels):
+#     print(len(data))
+#     temp = list(range(len(test_inputs)//10))
+#     random.shuffle(temp)
+#     test_inputs_copy = test_inputs[:]
+#     test_labels_copy = test_labels[:]
+
+#     for i, j in enumerate(temp):
+#         if not i == j:
+#             test_inputs_copy[i*10],test_inputs_copy[(i*10)+1] = test_inputs[j*10],test_inputs[(j*10)+1]
+#             test_labels_copy[i*10],test_labels_copy[(i*10)+1] = test_labels[j*10],test_labels[(j*10)+1]
+
+#     return test_inputs_copy, test_labels_copy
+
+# def shuffle_data_for_train(train_inputs, train_labels):
+#     indices = tf.range(len(train_inputs))
+#     tf.random.shuffle(indices)
+#     tf.gather(train_inputs, indices)
+#     tf.gather(train_labels, indices)
+#     return train_inputs, train_labels
 
 def get_data_for_scae():
     with h5py.File('scae_synthetic_inputs.hdf5', 'r') as hf:
@@ -323,6 +347,17 @@ def get_train():
     return train_inputs, train_labels
 
 
+# def get_small_inputs():
+#     with h5py.File('../data/test_inputs.hdf5', 'r') as hf:
+#         test_inputs = hf['test_inputs'][:]
+
+
+#     with h5py.File('../data/test_labels.hdf5', 'r') as hf:
+#         test_labels = hf['test_labels'][:]
+
+
+#     # train_inputs, train_labels = shuffle_data_for_train(train_inputs, train_labels)
+#     return test_inputs, test_labels
 
 def get_test():
     with h5py.File('shuffled_test_labels.hdf5', 'r') as hf:
@@ -339,168 +374,6 @@ def get_test():
     return test_inputs, test_labels
 
 
-
-# # legacy get data function
-#     """
-#     Input: Root directory of Data
-#     Output: Arrays for
-#     1) Input images to SCAE
-#     2) Input train images & labels for DF Model
-#     3) Input test image & labels for DF Model
-
-#     This function is called in the model to open the pickle.
-#     """
-#     print("Opening hdf5 data...")
-
-#     with h5py.File('train_labels.hdf5', 'r') as hf:
-#         train_labels = hf['train_labels'][:]
-
-#     print("train labels finished")
-
-#     with h5py.File('test_labels.hdf5', 'r') as hf:
-#         test_labels = hf['test_labels'][:]
-
-#     print("test labels finished")
-
-#     with h5py.File('train_inputs.hdf5', 'r') as hf:
-#         train_inputs = hf['train_inputs'][:]
-
-#     print("train inputs finished")
-
-#     with h5py.File('test_inputs.hdf5', 'r') as hf:
-#         test_inputs = hf['test_inputs'][:]
-
-#     print("test inputs finished")
-
-#     print("Finished opening hdf5 data...")
-
-#     train_inputs, train_labels = shuffle_data_for_train(train_inputs, train_labels)
-#     test_inputs, test_labels = shuffle_data_for_test(test_inputs, test_labels)
-
-#     return train_inputs, train_labels, test_inputs, test_labels
-
-def process_unlabeled_real(root_dir):
-    """ Input: Root directory (string)
-        Output: Creates 5 pickle files to use for our model.
-        1) Train inputs for SCAE
-        2) Train input & labels for DeepFont model
-        3) Test input & labels for DeepFont Model
-    """
-    scae_inputs = []
-
-    print(root_dir)
-    count = 0
-
-    print(os.listdir(root_dir))
-    # for file in os.listdir(root_dir): # goes through all font folders
-    #     print(file)
-    #     filename = os.fsdecode(file)
-    #
-    #     if filename.endswith(".jpeg") or filename.endswith(".png") or filename.endswith(".jpg"):
-    #         image_path = root_dir + "/" + file
-    #
-    #
-    #         print(image_path)
-    #         image = alter_image(image_path)
-    #
-    #
-    #         image = resize_image(image)
-    #         cropped_images = generate_crop(image, 96, 15)
-    #
-    #         for c in cropped_images:
-    #             scae_inputs.append(c)
-    #
-    #         if count % 2000:
-    #             print("---", count, "images processed---")
-    #         count += 1
-    #
-    #
-    # with open('scae_real_inputs.pkl', 'wb') as output:
-    #     pickle.dump(scae_inputs, output)
-    return
-
-def df_modified_test_pickles():
-    """
-    this function calls preprocess and produces pickles of images that
-    have not been cropped; there is one version of each image
-    """
-    process_single_pickle("../data/real_test_sample", "../data/df_sample_test_inputs_uncropped.pkl", False)
-    process_single_pickle("../data/syn_train_one_font", "../data/df_sample_train_inputs_uncropped.pkl", False)
-
-    train_labels = np.zeros(1000)
-    test_labels = np.transpose(np.zeros(1))
-
-    ti_pickle = open('../data/df_sample_test_inputs_uncropped.pkl', 'rb')
-    test_inputs = pickle.load(ti_pickle)
-    ti_pickle.close()
-
-    tri_pickle = open('../data/df_sample_train_inputs_uncropped.pkl', 'rb')
-    train_inputs = pickle.load(tri_pickle)
-    tri_pickle.close()
-
-    return train_inputs, train_labels, test_inputs, test_labels
-
-
-
-def df_test_pickles():
-    """
-    function specifically to help run df_original on a small data set.
-    """
-
-    process_single_pickle("../data/real_test_sample", "../data/df_sample_test_inputs.pkl", True)
-    process_single_pickle("../data/syn_train_one_font", "../data/df_sample_train_inputs.pkl", True)
-    train_labels = np.zeros((1,1000))
-    test_labels = np.zeros(10)
-
-
-    ti_pickle = open('../data/df_sample_test_inputs.pkl', 'rb')
-    test_inputs = pickle.load(ti_pickle)
-    ti_pickle.close()
-
-    tri_pickle = open('../data/df_sample_train_inputs.pkl', 'rb')
-    train_inputs = pickle.load(tri_pickle)
-    tri_pickle.close()
-
-    return train_inputs, train_labels, test_inputs, test_labels
-
-
-# def get_train():
-#     print("Running preprocessing...")
-#     # root_dir = 'C:/Users/katsa/Documents/cs/cs1470/real_images/VFR_real_test' #Katherine's file path
-# #     root_dir =  'C:/Users/kimur/Documents/homework/cs1470/VFR_real_test' #Minna's file path
-#     # root_dir = './syn_train_one_font'
-#     process_single_pickle('../data/syn_train_one_font')
-#     pickled = open('../data/scae_small_images.pkl', 'rb')
-#     array = pickle.load(pickled)
-#     pickled.close()
-
-#     return array
-    # return cropped_images, big_array, font_labels
-
-
-
-    # single_file = 'C:/Users/kimur/Documents/homework/cs1470/VFR_real_test/ACaslonPro-Bold/ACaslonPro-Bold1276.png'
-    # alter_image(single_file)
-
-    #     print(cropped_images["ACaslonPro-Bold"])
-    #     print()
-    #     print(cropped_images["ACaslonPro-Italic"])
-    # with open('syn_train_fonts_1.pkl', 'wb') as output:
-    #     pickle.dump(cropped_images, output)
-    #
-    # with open('syn_train_labels_1.pkl', 'wb') as output:
-    #     pickle.dump(font_labels, output)
-    # print("Finished preprocessing.")
-
-# def get_test():
-#     print("Running preprocessing...")
-
-#     root_dir = './real_test_sample'
-
-#     cropped_images, font_labels, big_array = preprocess(root_dir)
-
-#     return cropped_images, big_array, font_labels
-#     print("done w test")
 
 # def main():
     # our small sample test
@@ -539,11 +412,13 @@ def relabel_labels(labels):
 
     return new_labels
 
-# def main():
-#     # create_hdf5('./syn_train')
-#     # create_font_dictionary()
-#     # create_total_font_dictionary()
+def main():
+    # create_hdf5('./syn_train')
+    create_font_dictionary()
+    # create_total_font_dictionary()
+    # create_hdf5('./syn_train_one_font')
+    # process_unlabeled_real('./scrape-wtf-new')
 
 
-# if __name__ == "__main__":
-#     main()
+if __name__ == "__main__":
+    main()

@@ -80,10 +80,10 @@ class DeepFont(tf.keras.Model): #is this how to convert to sequential?
 		"""
 		super(DeepFont, self).__init__()
 		# TODO: Define the model, loss, and optimizer
-		self.batch_size = 1
+		self.batch_size = 128
 		self.model = tf.keras.Sequential()
 		self.model.add(tf.keras.layers.Reshape((96, 96, 1)))
-		self.model.add(tf.keras.layers.Conv2D(trainable=False, filters=64, strides=(2,2), kernel_size=(3,3), padding='same', name='conv_layer1', input_shape=(105, 105,1))) #, input_shape=(args.batch_size,)
+		self.model.add(tf.keras.layers.Conv2D(trainable=False, filters=64, strides=(2,2), kernel_size=(3,3), padding='same', name='conv_layer1', input_shape=(96, 96,1))) #, input_shape=(args.batch_size,)
 		self.model.add(tf.keras.layers.BatchNormalization())
 		self.model.add(tf.keras.layers.MaxPooling2D(pool_size=(2,2), strides=None, padding='same'))
 
@@ -97,21 +97,23 @@ class DeepFont(tf.keras.Model): #is this how to convert to sequential?
 
 		self.model.add(tf.keras.layers.Flatten())
 		self.model.add(tf.keras.layers.Dense(512, activation='relu'))
-		self.model.add(tf.keras.layers.Dense(256, activation='relu'))
+		self.model.add(tf.keras.layers.Dense(512, activation='relu'))
 		self.model.add(tf.keras.layers.Dense(150))
 
-        self.reshape_test = tf.keras.layers.Reshape((self.batch_size, 10, 150))
+		self.reshape_test = tf.keras.layers.Reshape((self.batch_size, 10, 150))
 
 		self.optimizer = tf.keras.optimizers.Adam(learning_rate = 0.01)
 
-	@tf.function
 	def call(self, inputs):
-		print(inputs.shape)
+		print(inputs)
 		return self.model(inputs)
 
-	@tf.function
 	def loss_function(self, probs, labels):
 		loss = tf.keras.losses.sparse_categorical_crossentropy(labels, probs)
+		# print("probs:")
+		# print(probs)
+		print("labels:")
+		print(labels)
 		return loss
 
 	def total_accuracy(self, logits, labels):
@@ -203,6 +205,7 @@ def main():
 			if args.mode == 'train':
 				train_inputs, train_labels = get_train()
 				train_labels = relabel_labels(train_labels)
+				# print(train_inputs[0].shape)
 
 				for epoch in range(0, args.num_epochs):
 					print('========================== EPOCH %d  ==========================' % epoch)
