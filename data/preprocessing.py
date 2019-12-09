@@ -98,7 +98,7 @@ def create_font_dictionary():
     count = 1
     for line in content:
         print(line)
-        dict[line] = ""
+        dict[line] = count
         count += 1
     with open('150_fonts.json', 'w') as fp:
         json.dump(dict, fp,  indent=4)
@@ -440,7 +440,8 @@ def get_train():
 #     process_unlabeled_real("../../final_data/scrape-wtf-new")
 
 def main():
-    create_hdf5('./syn_train')
+    # create_hdf5('./syn_train')
+    create_font_dictionary()
     # create_total_font_dictionary()
 
 if __name__ == "__main__":
