@@ -201,10 +201,6 @@ def create_hdf5(root_dir):
     test_inputs = []
     test_labels = []
 
-
-    with open('font_dict.json') as json_file:
-        font_dict = json.load(json_file)
-
     with open('150_fonts.json') as json_file:
         font_subset = json.load(json_file)
 
@@ -236,11 +232,11 @@ def create_hdf5(root_dir):
                 elif file_count < 200:
                     for c in cropped_images:
                         test_inputs.append(c)
-                        test_labels.append(font_dict[font_name])
+                        test_labels.append(font_subset[font_name])
                 else:
                     for c in cropped_images:
                         train_inputs.append(c)
-                        train_labels.append(font_dict[font_name])
+                        train_labels.append(font_subset[font_name])
 
                 file_count += 1
 
@@ -297,35 +293,11 @@ def shuffle_and_save(inputs, inputs_file_name, labels, labels_file_name, shuffle
 
 
 def shuffle_and_save_scae(inputs, inputs_file_name):
-    indices = tf.range(len(inputs))
-    tf.random.shuffle(indices)
-    tf.gather(inputs, indices)
-    tf.gather(inputs, indices)
+    random.shuffle(inputs)
 
     with h5py.File(inputs_file_name + '.hdf5', 'w') as f:
-         f.create_dataset('inputs_file_name',data=inputs)
+         f.create_dataset(inputs_file_name,data=inputs)
 
-
-# def shuffle_data_for_test(test_inputs, test_labels):
-#     print(len(data))
-#     temp = list(range(len(test_inputs)//10))
-#     random.shuffle(temp)
-#     test_inputs_copy = test_inputs[:]
-#     test_labels_copy = test_labels[:]
-
-#     for i, j in enumerate(temp):
-#         if not i == j:
-#             test_inputs_copy[i*10],test_inputs_copy[(i*10)+1] = test_inputs[j*10],test_inputs[(j*10)+1]
-#             test_labels_copy[i*10],test_labels_copy[(i*10)+1] = test_labels[j*10],test_labels[(j*10)+1]
-
-#     return test_inputs_copy, test_labels_copy
-
-# def shuffle_data_for_train(train_inputs, train_labels):
-#     indices = tf.range(len(train_inputs))
-#     tf.random.shuffle(indices)
-#     tf.gather(train_inputs, indices)
-#     tf.gather(train_labels, indices)
-#     return train_inputs, train_labels
 
 def get_data_for_scae():
     with h5py.File('scae_synthetic_inputs.hdf5', 'r') as hf:
@@ -374,51 +346,38 @@ def get_test():
     return test_inputs, test_labels
 
 
+def combine_real_synth_for_scae():
+    with h5py.File('scae_synthetic_inputs.hdf5', 'r') as synth, h5py.File('scae_real_inputs_fixed.hdf5', 'r') as real:
+        synth_data = synth['scae_synthetic_inputs'][:]
+        real_data = real['scae'][:]
+    
+    all_data = np.concatenate((synth_data, real_data), axis=0)
 
-# def main():
-    # our small sample test
+    random.shuffle(all_data)
 
-    # create_pickle("real_test_sample")
-    #
-#     # pickled = open('scae_inputs.pkl', 'rb')
-#     # array = pickle.load(pickled)
-#     # pickled.close()
-#     #
-#     # count = 0
-#     # for img in array:
-#     #     final_image = img.convert("L")
-#     #     image_file = "test_img/" +str(count) + "img.png"
-#     #     final_image.save(image_file, format='PNG')
-#     #     count += 1
-#     #
-#     # create_pickle("real_test_sample")
-#     print("Start processing!")
-#     process_unlabeled_real("../../final_data/scrape-wtf-new")
+    return all_data
 
-def relabel_labels(labels):
-    new_labels = np.zeros(len(labels))
-
-    with open('backwards_font_dict.json') as json_file:
-        backwards_font_dict = json.load(json_file)
-
-    with open('150_fonts.json') as json_file:
-        new_indexing = json.load(json_file)
-
-
-    for i in range(0, len(labels)):
-        old_index = labels[i]
-        name = backwards_font_dict[str(old_index)]
-        new_labels[i] = new_indexing[name]
-
-    return new_labels
 
 def main():
     # create_hdf5('./syn_train')
-    create_font_dictionary()
+    # create_font_dictionary()
     # create_total_font_dictionary()
     # create_hdf5('./syn_train_one_font')
     # process_unlabeled_real('./scrape-wtf-new')
 
+    print("opening labels...")
+
+    with h5py.File('scae_real_inputs_fixed.hdf5', 'r') as hf:
+        test_labels = hf['scae'][:]
+
+    print(test_labels)
+
+    print("---")
+    for img in test_labels:
+        for r in img:
+            for n in r:
+                if n < 0:
+                    print(n)
 
 if __name__ == "__main__":
     main()

@@ -204,8 +204,6 @@ def main():
 			# train_inputs, train_labels, test_inputs, test_labels = get_data()
 			if args.mode == 'train':
 				train_inputs, train_labels = get_train()
-				train_labels = relabel_labels(train_labels)
-				# print(train_inputs[0].shape)
 
 				for epoch in range(0, args.num_epochs):
 					print('========================== EPOCH %d  ==========================' % epoch)

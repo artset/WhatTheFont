@@ -213,7 +213,7 @@ def main():
 		with tf.device('/device:' + args.device):
 			if args.mode == 'train':
 				train_inputs, train_labels = get_train()
-				train_labels = relabel_labels(train_labels)
+				# train_labels = relabel_labels(train_labels)
 
 				for epoch in range(0, args.num_epochs):
 					print('========================== EPOCH %d  ==========================' % epoch)

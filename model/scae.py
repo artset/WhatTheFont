@@ -6,7 +6,7 @@ import tensorflow_hub as hub
 import sys
 sys.path.append('../data')
 
-from scae_preprocessing import *
+from preprocessing import *
 import numpy as np
 
 from imageio import imwrite
@@ -110,20 +110,19 @@ class SCAE(tf.keras.Model):
         original = self.reshape(original)
         return tf.reduce_sum((original-decoded)**2) / original.shape[0]
 
-def train(model, real_images, fake_images):
-    iterations = (len(real_images) + len(fake_images)) // model.batch_size
-    fake_batch = len(fake_images) // iterations
-    real_batch = len(real_images) // iterations
+def train(model, inputs):
+    iterations = len(inputs) // model.batch_size
+
 
     total_loss = 0
 
     for i in range(iterations):
-        # image_inputs = images[i * model.batch_size : (i+1) * model.batch_size]
-        real_inputs = real_images[i * real_batch : (i+1) * real_batch]
-        fake_inputs = fake_images[i * fake_batch : (i+1) * fake_batch]
+        image_inputs = inputs[i * model.batch_size : (i+1) * model.batch_size]
+        # real_inputs = real_images[i * real_batch : (i+1) * real_batch]
+        # fake_inputs = fake_images[i * fake_batch : (i+1) * fake_batch]
 
-        inputs = np.concatenate((real_inputs, fake_inputs), axis=0)
-        random.shuffle(inputs)
+        # inputs = np.concatenate((real_inputs, fake_inputs), axis=0)
+        
 
         with tf.GradientTape() as tape:
             res = model(inputs)
@@ -173,11 +172,13 @@ def main():
         # Specify an invalid GPU device
         with tf.device('/device:' + args.device):
             if args.mode == 'train':
-                real_images, fake_images = combine_real_synth_for_scae()
-                # real_images, fake_images = test_scae()
+                # real_images, fake_images = combine_real_synth_for_scae()
+                all_data = combine_real_synth_for_scae()
+
                 for epoch in range(0, args.num_epochs):
                     print('========================== EPOCH %d  ==========================' % epoch)
-                    train(scae, real_images, fake_images)
+                    # train(scae, real_images, fake_images)
+                    train(scae, all_data)
                     print("**** SAVING CHECKPOINT AT END OF EPOCH ****")
                     manager.save()
                     scae.save_weights('./weights/weights_2.h5')
