@@ -173,10 +173,20 @@ def combine_real_synth_for_scae():
     with h5py.File('scae_synthetic_inputs.hdf5', 'r') as synth, h5py.File('scae_real_inputs.hdf5', 'r') as real:
         synth_data = synth['scae_synthetic_inputs'][:]
         real_data = real['scae'][:]
+    
+    random.shuffle(synth_data)
 
     return real_data, synth_data
 
-
+def shuffle_data(data):
+    print(len(data))
+    temp = list(range(len(data)//10))
+    random.shuffle(temp)
+    data_copy = data[:]
+    for i, j in enumerate(temp):
+        if not i == j:
+            data_copy[i*10],data_copy[(i*10)+1] = data[j*10],data[(j*10)+1]
+    return data_copy
 
 def get_data(file_path):
     """

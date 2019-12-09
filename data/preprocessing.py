@@ -263,6 +263,27 @@ def process_single_pickle(root_dir, destination, if_cropped):
     with open(destination, 'wb') as output:
         pickle.dump(image_array, output)
 
+def shuffle_data_for_test(test_inputs, test_labels):
+    print(len(data))
+    temp = list(range(len(test_inputs)//10))
+    random.shuffle(temp)
+    test_inputs_copy = test_inputs[:]
+    test_labels_copy = test_labels[:]
+
+    for i, j in enumerate(temp):
+        if not i == j:
+            test_inputs_copy[i*10],test_inputs_copy[(i*10)+1] = test_inputs[j*10],test_inputs[(j*10)+1]
+            test_labels_copy[i*10],test_labels_copy[(i*10)+1] = test_labels[j*10],test_labels[(j*10)+1]
+
+    return test_inputs_copy, test_labels_copy
+
+def shuffle_data_for_train(train_inputs, train_labels):
+    indices = tf.range(len(train_inputs))
+    tf.random.shuffle(indices)
+    tf.gather(train_inputs, indices)
+    tf.gather(train_labels, indices)
+    return train_inputs, train_labels
+
 def get_data_for_scae():
     with h5py.File('scae_synthetic_inputs.hdf5', 'r') as hf:
         scae_synthetic_inputs = hf['scae_synthetic_inputs'][:]
@@ -278,12 +299,12 @@ def get_data():
 
     This function is called in the model to open the pickle.
     """
-    print("Opening hdm5 data...")
+    print("Opening hdf5 data...")
 
 
     with h5py.File('train_inputs.hdf5', 'r') as hf:
         train_inputs = hf['train_inputs'][:]
-
+    
     with h5py.File('train_labels.hdf5', 'r') as hf:
         train_labels = hf['train_labels'][:]
 
@@ -291,9 +312,13 @@ def get_data():
         test_inputs = hf['test_inputs'][:]
 
     with h5py.File('test_labels.hdf5', 'r') as hf:
-        test_inputs = hf['test_labels'][:]
+        test_labels = hf['test_labels'][:]
 
-    print("Finished opening hdm5 data...")
+    print("Finished opening hdf5 data...")
+
+    train_inputs, train_labels = shuffle_data_for_train(train_inputs, train_labels)
+    test_inputs, test_labels = shuffle_data_for_test(test_inputs, test_labels)
+
     return train_inputs, train_labels, test_inputs, test_labels
 
 def process_unlabeled_real(root_dir):

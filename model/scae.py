@@ -13,6 +13,7 @@ from imageio import imwrite
 import os
 import argparse
 import sys
+import random
 
 # Killing optional CPU driver warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -122,6 +123,7 @@ def train(model, real_images, fake_images):
         fake_inputs = fake_images[i * fake_batch : (i+1) * fake_batch]
 
         inputs = np.concatenate((real_inputs, fake_inputs), axis=0)
+        random.shuffle(inputs)
 
         with tf.GradientTape() as tape:
             res = model(inputs)
@@ -170,7 +172,7 @@ def main():
                     train(scae, real_images, fake_images)
                     print("**** SAVING CHECKPOINT AT END OF EPOCH ****")
                     manager.save()
-                    scae.save_weights('./weights/weights.h5')
+                    scae.save_weights('./weights/weights_2.h5')
             # if args.mode == 'test':
             #     test(scae)
     except RuntimeError as e:
