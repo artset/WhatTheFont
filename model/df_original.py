@@ -23,6 +23,8 @@ gpu_available = tf.test.is_gpu_available()
 print("GPU Available: ", gpu_available)
 
 
+
+
 parser = argparse.ArgumentParser(description='DCGAN')
 
 parser.add_argument('--img-dir', type=str, default='./data/celebA',
@@ -94,9 +96,9 @@ class DeepFont(tf.keras.Model): #is this how to convert to sequential?
 		self.model.add(tf.keras.layers.Conv2D(256, kernel_size=(3,3), strides=(1,1), padding='same'))
 
 		self.model.add(tf.keras.layers.Flatten())
-		self.model.add(tf.keras.layers.Dense(4096, activation='relu'))
-		self.model.add(tf.keras.layers.Dense(4096, activation='relu'))
-		self.model.add(tf.keras.layers.Dense(2383))
+		self.model.add(tf.keras.layers.Dense(512, activation='relu'))
+		self.model.add(tf.keras.layers.Dense(256, activation='relu'))
+		self.model.add(tf.keras.layers.Dense(150))
 
 		self.optimizer = tf.keras.optimizers.Adam(learning_rate = 0.01)
 
@@ -241,8 +243,9 @@ def main():
 	try:
 		# Specify an invalid GPU device
 		with tf.device('/device:' + args.device):
-			train_inputs, train_labels, test_inputs, test_labels = get_data()
+			# train_inputs, train_labels, test_inputs, test_labels = get_data()
 			if args.mode == 'train':
+				train_inputs, train_labels = get_train()
 				train_labels = relabel_labels(train_labels)
 
 				for epoch in range(0, args.num_epochs):
@@ -252,6 +255,7 @@ def main():
 					print("**** SAVING CHECKPOINT AT END OF EPOCH ****")
 					manager.save()
 			if args.mode == 'test':
+				test_inputs, test_labels = get_test()
 				test_labels = relabel_labels(test_labels)
 				print("--test accuracy--", test(model, test_inputs, test_labels))
 	except RuntimeError as e:

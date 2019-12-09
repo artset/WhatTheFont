@@ -308,37 +308,76 @@ def get_data_for_scae():
         scae_synthetic_inputs = hf['scae_synthetic_inputs'][:]
     return scae_synthetic_inputs
 
-def get_data():
-    """
-    Input: Root directory of Data
-    Output: Arrays for
-    1) Input images to SCAE
-    2) Input train images & labels for DF Model
-    3) Input test image & labels for DF Model
+def get_train():
+    with h5py.File('train_labels.hdf5', 'r') as hf:
+        train_labels = hf['train_labels'][:]
 
-    This function is called in the model to open the pickle.
-    """
-    print("Opening hdf5 data...")
-
+    print("train labels finished")
 
     with h5py.File('train_inputs.hdf5', 'r') as hf:
         train_inputs = hf['train_inputs'][:]
-    
-    with h5py.File('train_labels.hdf5', 'r') as hf:
-        train_labels = hf['train_labels'][:]
+
+    print("train inputs finished")
+
+    # train_inputs, train_labels = shuffle_data_for_train(train_inputs, train_labels)
+    return train_inputs, train_labels
+
+
+
+def get_test():
+    with h5py.File('test_labels.hdf5', 'r') as hf:
+        test_labels = hf['test_labels'][:]
+
+    print("test labels finished")
 
     with h5py.File('test_inputs.hdf5', 'r') as hf:
         test_inputs = hf['test_inputs'][:]
 
-    with h5py.File('test_labels.hdf5', 'r') as hf:
-        test_labels = hf['test_labels'][:]
+    print("test inputs finished")
 
-    print("Finished opening hdf5 data...")
+    # test_inputs, test_labels = shuffle_data_for_test(test_inputs, test_labels)
+    return test_inputs, test_labels
 
-    train_inputs, train_labels = shuffle_data_for_train(train_inputs, train_labels)
-    test_inputs, test_labels = shuffle_data_for_test(test_inputs, test_labels)
 
-    return train_inputs, train_labels, test_inputs, test_labels
+
+# # legacy get data function
+#     """
+#     Input: Root directory of Data
+#     Output: Arrays for
+#     1) Input images to SCAE
+#     2) Input train images & labels for DF Model
+#     3) Input test image & labels for DF Model
+
+#     This function is called in the model to open the pickle.
+#     """
+#     print("Opening hdf5 data...")
+
+#     with h5py.File('train_labels.hdf5', 'r') as hf:
+#         train_labels = hf['train_labels'][:]
+
+#     print("train labels finished")
+
+#     with h5py.File('test_labels.hdf5', 'r') as hf:
+#         test_labels = hf['test_labels'][:]
+
+#     print("test labels finished")
+
+#     with h5py.File('train_inputs.hdf5', 'r') as hf:
+#         train_inputs = hf['train_inputs'][:]
+
+#     print("train inputs finished")
+
+#     with h5py.File('test_inputs.hdf5', 'r') as hf:
+#         test_inputs = hf['test_inputs'][:]
+
+#     print("test inputs finished")
+
+#     print("Finished opening hdf5 data...")
+
+#     train_inputs, train_labels = shuffle_data_for_train(train_inputs, train_labels)
+#     test_inputs, test_labels = shuffle_data_for_test(test_inputs, test_labels)
+
+#     return train_inputs, train_labels, test_inputs, test_labels
 
 def process_unlabeled_real(root_dir):
     """ Input: Root directory (string)
@@ -425,17 +464,17 @@ def df_test_pickles():
     return train_inputs, train_labels, test_inputs, test_labels
 
 
-def get_train():
-    print("Running preprocessing...")
-    # root_dir = 'C:/Users/katsa/Documents/cs/cs1470/real_images/VFR_real_test' #Katherine's file path
-#     root_dir =  'C:/Users/kimur/Documents/homework/cs1470/VFR_real_test' #Minna's file path
-    # root_dir = './syn_train_one_font'
-    process_single_pickle('../data/syn_train_one_font')
-    pickled = open('../data/scae_small_images.pkl', 'rb')
-    array = pickle.load(pickled)
-    pickled.close()
+# def get_train():
+#     print("Running preprocessing...")
+#     # root_dir = 'C:/Users/katsa/Documents/cs/cs1470/real_images/VFR_real_test' #Katherine's file path
+# #     root_dir =  'C:/Users/kimur/Documents/homework/cs1470/VFR_real_test' #Minna's file path
+#     # root_dir = './syn_train_one_font'
+#     process_single_pickle('../data/syn_train_one_font')
+#     pickled = open('../data/scae_small_images.pkl', 'rb')
+#     array = pickle.load(pickled)
+#     pickled.close()
 
-    return array
+#     return array
     # return cropped_images, big_array, font_labels
 
 
@@ -500,11 +539,11 @@ def relabel_labels(labels):
 
     return new_labels
 
-def main():
-    # create_hdf5('./syn_train')
-    # create_font_dictionary()
-    # create_total_font_dictionary()
+# def main():
+#     # create_hdf5('./syn_train')
+#     # create_font_dictionary()
+#     # create_total_font_dictionary()
 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
