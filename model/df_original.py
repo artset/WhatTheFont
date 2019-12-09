@@ -77,7 +77,13 @@ class DeepFont(tf.keras.Model): #is this how to convert to sequential?
 		"""
 		super(DeepFont, self).__init__()
 		# TODO: Define the model, loss, and optimizer
-		self.batch_size = 1
+
+
+		self.batch_size = 20
+
+		# 10 is the number of cropped images
+		self.reshape_test = tf.keras.layers.Reshape((self.batch_size, 10, 2383), input_shape=(self.batch_size, ))
+
 		self.model = tf.keras.Sequential()
 		self.model.add(tf.keras.layers.Reshape((96, 96, 1)))
 		self.model.add(tf.keras.layers.Conv2D(trainable=False, filters=64, strides=(2,2), kernel_size=(3,3), padding='same', name='conv_layer1', input_shape=(105, 105,1))) #, input_shape=(args.batch_size,)
@@ -109,11 +115,10 @@ class DeepFont(tf.keras.Model): #is this how to convert to sequential?
 		:return: prescaled generated images, shape=[batch_size, height, width, channel]
 		"""
 		# TODO: Call the forward pass
-		print(inputs.shape)
 		return self.model(inputs)
 
 	@tf.function
-	def loss_function(self, probs, labels):
+	def loss_function(self, logits, labels):
 		"""
 		Outputs the loss given the discriminator output on the generated images.
 
@@ -122,7 +127,7 @@ class DeepFont(tf.keras.Model): #is this how to convert to sequential?
 		:return: loss, the cross entropy loss, scalar
 		"""
 		# TODO: Calculate the loss
-		loss = tf.keras.losses.sparse_categorical_crossentropy(labels, probs)
+		loss = tf.keras.losses.sparse_categorical_crossentropy(labels, logits, from_logits=True)
 		return loss
 
 	# @tf.function
@@ -210,17 +215,25 @@ def test(model, test_inputs, test_labels):
 
 	acc = 0
 
+	num_batches = 1
+
 
 	for i in range(num_batches): # hardcode 15 because each i is an image
 		# print("-------------batch", i, "-------------")
-		batch_inputs = test_inputs[i * model.batch_size: (i+1) * model.batch_size ]
+		batch_inputs = test_inputs[i * model.batch_size : (i+1) * model.batch_size ]
 		batch_labels = test_labels[i * model.batch_size : (i+1) * model.batch_size]
 
-		predictions = model.call(batch_inputs) # prediction for a single image
-		acc += model.total_accuracy(predictions, batch_labels)
-		# print("summed accuracy", acc)
-	return acc / float(num_batches)
+		logits = model.call(batch_inputs) # predictions for a batch of : [batch size x 2383]
 
+		print("logits", logits)
+		print("batch_labels", batch_labels)
+		if i % 1000 == 0:
+			print("Loss:", model.loss_function(logits, batch_labels))
+
+		acc += model.total_accuracy(logits, batch_labels)
+		# print("summed num_batches)
+
+	return acc / float(num_batches)
 
 ## --------------------------------------------------------------------------------------
 
@@ -248,8 +261,16 @@ def main():
 	try:
 		# Specify an invalid GPU device
 		with tf.device('/device:' + args.device):
-			train_inputs, train_labels, test_inputs, test_labels = get_data()
+			print(args.mode)
+			# train_inputs, train_labels, test_inputs, test_labels = get_data()
+
+
+
+			# tjhis is on a small set
+			train_inputs, train_labels, test_inputs, test_labels = df_test_pickles()
 			if args.mode == 'train':
+				print("train labels shape", train_labels.shape)
+				# this is on a small set
 				# images = get_train()
 				# images = np.array(images)
 
@@ -260,6 +281,7 @@ def main():
 					print("**** SAVING CHECKPOINT AT END OF EPOCH ****")
 					manager.save()
 			if args.mode == 'test':
+				# print(train_labels.shape)
 				print("--test accuracy--", test(model, test_inputs, test_labels))
 	except RuntimeError as e:
 		print(e)
