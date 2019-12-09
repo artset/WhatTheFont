@@ -309,13 +309,13 @@ def get_data_for_scae():
     return scae_synthetic_inputs
 
 def get_train():
-    with h5py.File('train_labels.hdf5', 'r') as hf:
-        train_labels = hf['train_labels'][:]
+    with h5py.File('shuffled_train_labels.hdf5', 'r') as hf:
+        train_labels = hf['shuffled_train_labels'][:]
 
     print("train labels finished")
 
-    with h5py.File('train_inputs.hdf5', 'r') as hf:
-        train_inputs = hf['train_inputs'][:]
+    with h5py.File('shuffled_train_inputs.hdf5', 'r') as hf:
+        train_inputs = hf['shuffled_train_inputs'][:]
 
     print("train inputs finished")
 
@@ -325,13 +325,13 @@ def get_train():
 
 
 def get_test():
-    with h5py.File('test_labels.hdf5', 'r') as hf:
-        test_labels = hf['test_labels'][:]
+    with h5py.File('shuffled_test_labels.hdf5', 'r') as hf:
+        test_labels = hf['shuffled_test_labels'][:]
 
     print("test labels finished")
 
-    with h5py.File('test_inputs.hdf5', 'r') as hf:
-        test_inputs = hf['test_inputs'][:]
+    with h5py.File('shuffled_test_inputs.hdf5', 'r') as hf:
+        test_inputs = hf['shuffled_test_inputs'][:]
 
     print("test inputs finished")
 

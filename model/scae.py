@@ -140,6 +140,14 @@ def train(model, real_images, fake_images):
 
     print("AVERAGE LOSS THIS EPOCH", total_loss)
 
+def test(model, images):
+    # TODO: This isn't really a test, it's moreso a 'show the outputs of our decoder for poster'
+    # 1) Call the encoder, and decoder outputs
+    # 2) Save encoder + decoder on some samples.
+
+
+    pass
+
 def main():
 
     # images = get_data('scae_real_inputs.h5')
@@ -165,8 +173,8 @@ def main():
         # Specify an invalid GPU device
         with tf.device('/device:' + args.device):
             if args.mode == 'train':
-                # real_images, fake_images = combine_real_synth_for_scae()
-                real_images, fake_images = test_scae()
+                real_images, fake_images = combine_real_synth_for_scae()
+                # real_images, fake_images = test_scae()
                 for epoch in range(0, args.num_epochs):
                     print('========================== EPOCH %d  ==========================' % epoch)
                     train(scae, real_images, fake_images)
@@ -174,7 +182,7 @@ def main():
                     manager.save()
                     scae.save_weights('./weights/weights_2.h5')
             # if args.mode == 'test':
-            #     test(scae)
+            #     test(scae, images)
     except RuntimeError as e:
         print(e)
 

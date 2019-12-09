@@ -77,7 +77,7 @@ class DeepFont(tf.keras.Model): #is this how to convert to sequential?
 		# TODO: Define the model, loss, and optimizer
 		self.batch_size = 2
 		self.stride_size = 1
-		self.num_classes = 2383
+		self.num_classes = 150
 
 
 		self.model = tf.keras.Sequential()
@@ -91,13 +91,13 @@ class DeepFont(tf.keras.Model): #is this how to convert to sequential?
 		self.model.add(tf.keras.layers.BatchNormalization())
 		self.model.add(tf.keras.layers.MaxPooling2D(pool_size=(2,2), strides=None, padding='same'))
 
-		self.model.add(tf.keras.layers.Conv2D(512, kernel_size=(3), strides=(self.stride_size), padding='same'))
+		self.model.add(tf.keras.layers.Conv2D(256, kernel_size=(3), strides=(self.stride_size), padding='same'))
+		self.model.add(tf.keras.layers.Conv2D(512, kernel_size=(3,3), strides=(self.stride_size), padding='same'))
 		self.model.add(tf.keras.layers.Conv2D(1024, kernel_size=(3,3), strides=(self.stride_size), padding='same'))
-		self.model.add(tf.keras.layers.Conv2D(2048, kernel_size=(3,3), strides=(self.stride_size), padding='same'))
-		self.model.add(tf.keras.layers.Conv2D(4096, kernel_size=(3,3), strides=(self.stride_size), padding='same'))
+		self.model.add(tf.keras.layers.Conv2D(1024, kernel_size=(3,3), strides=(self.stride_size), padding='same'))
 
 		self.final_dense = tf.keras.layers.Dense(self.num_classes)
-
+        self.reshape_test = tf.keras.layers.Reshape((self.batch_size, 10, 150))
 
 		self.optimizer = tf.keras.optimizers.Adam(learning_rate = 0.01)
 
@@ -122,74 +122,36 @@ class DeepFont(tf.keras.Model): #is this how to convert to sequential?
 
 	@tf.function
 	def loss_function(self, logits, labels):
-		"""
-		Outputs the loss given the discriminator output on the generated images.
-
-		:param disc_fake_output: the discrimator output on the generated images, shape=[batch_size,1]
-
-		:return: loss, the cross entropy loss, scalar
-		"""
-		# TODO: Calculate the loss
 		print(logits)
 		predictions = np.argmax(logits, axis = 1)
 		loss = tf.keras.losses.sparse_categorical_crossentropy(labels, logits, from_logits = True)
 		return loss
 
-	# @tf.function
-	# def single_image_accuracy(self, probs, label):
-	#   """ given 15 images and its label, computes accuracy
-	#   """
-	#   print("---single image accuracy--")
-	#   predictions = []
-	#
-	#   for i in range(len(probs)):
-	#       predictions.append(np.argmax(probs[i]))
-	#
-	#   tracker = Counter(predictions)
-	#   print(tracker)
-	#   print(label)
-	#
-	#   if (max(tracker, key = tracker.get) == label):
-	#       return 1
-	#   return 0
-
-	# @tf.function
 	def total_accuracy(self, probs, labels):
 		"""  given a batch of images ( 15 x batch_size), compute accuracy over those images
 		"""
 		print("----------total accuracy ----------")
-		total_accuracy = 0
-		print(len(probs))
-		for i in range(0, len(probs), 15):
-			# total_accuracy += self.single_image_accuracy(probs[i:i+ 15], labels[i])
-			single_image_probs  = probs[i: i+15]
-			single_image_labels = labels[i]
 
-			predictions = []
-			for j in range(len(probs)):
-				predictions.append(np.argmax(single_image_probs[i]))
+		acc = 0 
 
-			tracker = Counter(predictions)
-			print(tracker)
-			if (max(tracker, key = tracker.get) == single_image_labels):
-				total_accuracy += 1
+		print("input to reshape", logits)
+		sums = self.reshape_test(logits) # batch_size x cropped_img x num_classes
 
-		return total_accuracy / float(len(probs)/15)
+		sums = np.sum(predictions, axis = 1) # sums the columns of the logits
+
+		probabilities = tf.nn.softmax(sums) # batchsize x num_classes
+
+		top_five = np.argsort(probabilities, axis = 1)[:][-5:]
+
+		for i in range in (len(labels)):
+			if labels[i] in top_five[i]:
+				acc += 1
+
+		return acc / float(len(labels))
 
 
 
 def train(model, train_inputs, train_labels):
-	"""
-	Train the model for one epoch. Save a checkpoint every 500 or so batches.
-
-	:param generator: generator model
-	:param discriminator: discriminator model
-	:param dataset_ierator: iterator over dataset, see preprocess.py for more information
-	:param manager: the manager that handles saving checkpoints by calling save()
-
-	:return: The average FID score over the epoch
-	"""
-	# num_batches = int(len(train_inputs)/model.batch_size)
 	num_batches = len(train_inputs)//model.batch_size
 	for i in range(num_batches):
 		with tf.GradientTape() as tape:
@@ -205,13 +167,6 @@ def train(model, train_inputs, train_labels):
 
 # Test the model by generating some samples.
 def test(model, test_inputs, test_labels):
-	"""
-	Test the model.
-
-	:param generator: generator model
-
-	:return: None
-	"""
 	# 4 batches with one image in each batch_inputs
 	num_batches = len(test_inputs) // (model.batch_size * 15)
 	cropped_images = 15
@@ -237,10 +192,10 @@ def main():
 
 
 	model = DeepFont()
-	model.load_weights('./weights/weights.h5', by_name=True)
+	model.load_weights('./weights/weights2.h5', by_name=True)
 
 	# For saving/loading models
-	checkpoint_dir = './checkpoints_df'
+	checkpoint_dir = './checkpoints_df_modified'
 	checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
 	checkpoint = tf.train.Checkpoint(model = model)
 	manager = tf.train.CheckpointManager(checkpoint, checkpoint_dir, max_to_keep=3)
@@ -256,10 +211,9 @@ def main():
 	try:
 		# Specify an invalid GPU device
 		with tf.device('/device:' + args.device):
-			train_inputs, train_labels, test_inputs, test_labels = df_modified_test_pickles()
 			if args.mode == 'train':
-				# images = get_train()
-				# images = np.array(images)
+				train_inputs, train_labels = get_train()
+				train_labels = relabel_labels(train_labels)
 
 				for epoch in range(0, args.num_epochs):
 					print('========================== EPOCH %d  ==========================' % epoch)
@@ -268,6 +222,8 @@ def main():
 					print("**** SAVING CHECKPOINT AT END OF EPOCH ****")
 					manager.save()
 			if args.mode == 'test':
+                test_inputs, test_labels = get_test()
+				test_labels = relabel_labels(test_labels)
 				print("--test accuracy--", test(model, test_inputs, test_labels))
 	except RuntimeError as e:
 		print(e)

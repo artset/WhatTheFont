@@ -100,49 +100,20 @@ class DeepFont(tf.keras.Model): #is this how to convert to sequential?
 		self.model.add(tf.keras.layers.Dense(256, activation='relu'))
 		self.model.add(tf.keras.layers.Dense(150))
 
+        self.reshape_test = tf.keras.layers.Reshape((self.batch_size, 10, 150))
+
 		self.optimizer = tf.keras.optimizers.Adam(learning_rate = 0.01)
 
 	@tf.function
 	def call(self, inputs):
-		"""
-		Executes the generator model on the random noise vectors.
-		:param inputs: a batch of random noise vectors, shape=[batch_size, z_dim]
-		:return: prescaled generated images, shape=[batch_size, height, width, channel]
-		"""
-		# TODO: Call the forward pass
 		print(inputs.shape)
 		return self.model(inputs)
 
 	@tf.function
 	def loss_function(self, probs, labels):
-		"""
-		Outputs the loss given the discriminator output on the generated images.
-		:param disc_fake_output: the discrimator output on the generated images, shape=[batch_size,1]
-		:return: loss, the cross entropy loss, scalar
-		"""
-		# TODO: Calculate the loss
 		loss = tf.keras.losses.sparse_categorical_crossentropy(labels, probs)
 		return loss
 
-	# @tf.function
-	# def single_image_accuracy(self, probs, label):
-	# 	""" given 15 images and its label, computes accuracy
-	# 	"""
-	# 	print("---single image accuracy--")
-	# 	predictions = []
-	#
-	# 	for i in range(len(probs)):
-	# 		predictions.append(np.argmax(probs[i]))
-	#
-	# 	tracker = Counter(predictions)
-	# 	print(tracker)
-	# 	print(label)
-	#
-	# 	if (max(tracker, key = tracker.get) == label):
-	# 		return 1
-	# 	return 0
-
-	# @tf.function
 	def total_accuracy(self, logits, labels):
 		"""  given a batch of images [(batch_size * cropped_img) x num_classes]
 			 labels = 
@@ -170,14 +141,6 @@ class DeepFont(tf.keras.Model): #is this how to convert to sequential?
 
 
 def train(model, train_inputs, train_labels):
-	"""
-	Train the model for one epoch. Save a checkpoint every 500 or so batches.
-	:param generator: generator model
-	:param discriminator: discriminator model
-	:param dataset_ierator: iterator over dataset, see preprocess.py for more information
-	:param manager: the manager that handles saving checkpoints by calling save()
-	:return: The average FID score over the epoch
-	"""
 	# num_batches = int(len(train_inputs)/model.batch_size)
 	num_batches = len(train_inputs)//model.batch_size
 	for i in range(num_batches):
@@ -192,13 +155,8 @@ def train(model, train_inputs, train_labels):
 		gradients = tape.gradient(loss, model.trainable_variables)
 		model.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
 
-# Test the model by generating some samples.
 def test(model, test_inputs, test_labels):
-	"""
-	Test the model.
-	:param generator: generator model
-	:return: None
-	"""
+
 	# 4 batches with one image in each batch_inputs
 	num_batches = len(test_inputs) // (model.batch_size * 10)
 	cropped_images = 10
@@ -220,8 +178,6 @@ def test(model, test_inputs, test_labels):
 ## --------------------------------------------------------------------------------------
 
 def main():
-	# Initialize generator and discriminator models
-
 
 	model = DeepFont()
 	model.load_weights('weights_2.h5', by_name=True)
