@@ -121,6 +121,23 @@ def create_total_font_dictionary():
 
     #     #     pickle.dump(cropped_images, output)
 
+
+# from index:name
+def create_total_font_dictionary_backwards():
+    path = "./fontlist.txt"
+
+    f = open(path, 'r')
+    content = f.read().split()
+    dict = {}
+    count = 1
+    for line in content:
+        dict[count] = line
+        count += 1
+    with open('backwards_font_dict.json', 'w') as fp:
+        json.dump(dict, fp,  indent=4)
+
+    #     #     pickle.dump(cropped_images, output)
+
 def get_font_dict():
     with open('font_dict.json') as json_file:
         font_dict = json.load(json_file)
@@ -464,10 +481,28 @@ def get_train():
 #     print("Start processing!")
 #     process_unlabeled_real("../../final_data/scrape-wtf-new")
 
+def relabel_labels(labels):
+    new_labels = np.zeros(len(labels))
+
+    with open('backwards_font_dict.json') as json_file:
+        backwards_font_dict = json.load(json_file)
+
+    with open('150_fonts.json') as json_file:
+        new_indexing = json.load(json_file)
+
+
+    for i in range(0, len(labels)):
+        old_index = labels[i]
+        name = backwards_font_dict[str(old_index)]
+        new_labels[i] = new_indexing[name]
+
+    return new_labels
+
 def main():
     # create_hdf5('./syn_train')
-    create_font_dictionary()
+    # create_font_dictionary()
     # create_total_font_dictionary()
+
 
 if __name__ == "__main__":
     main()

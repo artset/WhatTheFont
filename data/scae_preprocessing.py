@@ -274,6 +274,22 @@ def process_unlabeled_real(root_dir):
     #     pickle.dump(scae_inputs, output)
     return
 
+def relabel_labels(labels):
+    new_labels = np.zeros(len(labels))
+
+    with open('backwards_font_dict.json') as json_file:
+        backwards_font_dict = json.load(json_file)
+
+    with open('150_fonts.json') as json_file:
+        new_indexing = json.load(json_file)
+
+
+    for i in range(0, len(labels))
+        old_index = labels[i]
+        name = backwards_font_dict[str(old_index)]
+        new_labels[i] = new_indexing[name]
+
+    return new_labels
 
 def main():
     # our small sample test
@@ -291,9 +307,13 @@ def main():
     #     count += 1
     #
     # create_pickle("real_test_sample")
-    print("Start processing!")
-    process_unlabeled_real("./scrape-wtf-new")
+    # print("Start processing!")
+    # process_unlabeled_real("./scrape-wtf-new")
     # process_unlabeled_real("./syn_train_one_font/ACaslonPro-Bold")
+
+    lst = [4, 203]
+
+    print(relabel_labels(lst))
 
 
 

@@ -13,7 +13,8 @@ import os
 import argparse
 from preprocessing import *
 
-#HI ITS MAGGIE PLZ RUN
+# this time, katherine is here T_TTTT 
+
 
 # Killing optional CPU driver warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -77,13 +78,7 @@ class DeepFont(tf.keras.Model): #is this how to convert to sequential?
 		"""
 		super(DeepFont, self).__init__()
 		# TODO: Define the model, loss, and optimizer
-
-
-		self.batch_size = 20
-
-		# 10 is the number of cropped images
-		self.reshape_test = tf.keras.layers.Reshape((self.batch_size, 10, 2383), input_shape=(self.batch_size, ))
-
+		self.batch_size = 1
 		self.model = tf.keras.Sequential()
 		self.model.add(tf.keras.layers.Reshape((96, 96, 1)))
 		self.model.add(tf.keras.layers.Conv2D(trainable=False, filters=64, strides=(2,2), kernel_size=(3,3), padding='same', name='conv_layer1', input_shape=(105, 105,1))) #, input_shape=(args.batch_size,)
@@ -109,25 +104,22 @@ class DeepFont(tf.keras.Model): #is this how to convert to sequential?
 	def call(self, inputs):
 		"""
 		Executes the generator model on the random noise vectors.
-
 		:param inputs: a batch of random noise vectors, shape=[batch_size, z_dim]
-
 		:return: prescaled generated images, shape=[batch_size, height, width, channel]
 		"""
 		# TODO: Call the forward pass
+		print(inputs.shape)
 		return self.model(inputs)
 
 	@tf.function
-	def loss_function(self, logits, labels):
+	def loss_function(self, probs, labels):
 		"""
 		Outputs the loss given the discriminator output on the generated images.
-
 		:param disc_fake_output: the discrimator output on the generated images, shape=[batch_size,1]
-
 		:return: loss, the cross entropy loss, scalar
 		"""
 		# TODO: Calculate the loss
-		loss = tf.keras.losses.sparse_categorical_crossentropy(labels, logits, from_logits=True)
+		loss = tf.keras.losses.sparse_categorical_crossentropy(labels, probs)
 		return loss
 
 	# @tf.function
@@ -178,12 +170,10 @@ class DeepFont(tf.keras.Model): #is this how to convert to sequential?
 def train(model, train_inputs, train_labels):
 	"""
 	Train the model for one epoch. Save a checkpoint every 500 or so batches.
-
 	:param generator: generator model
 	:param discriminator: discriminator model
 	:param dataset_ierator: iterator over dataset, see preprocess.py for more information
 	:param manager: the manager that handles saving checkpoints by calling save()
-
 	:return: The average FID score over the epoch
 	"""
 	# num_batches = int(len(train_inputs)/model.batch_size)
@@ -204,9 +194,7 @@ def train(model, train_inputs, train_labels):
 def test(model, test_inputs, test_labels):
 	"""
 	Test the model.
-
 	:param generator: generator model
-
 	:return: None
 	"""
 	# 4 batches with one image in each batch_inputs
@@ -215,25 +203,17 @@ def test(model, test_inputs, test_labels):
 
 	acc = 0
 
-	num_batches = 1
-
 
 	for i in range(num_batches): # hardcode 15 because each i is an image
 		# print("-------------batch", i, "-------------")
-		batch_inputs = test_inputs[i * model.batch_size : (i+1) * model.batch_size ]
+		batch_inputs = test_inputs[i * model.batch_size: (i+1) * model.batch_size ]
 		batch_labels = test_labels[i * model.batch_size : (i+1) * model.batch_size]
 
-		logits = model.call(batch_inputs) # predictions for a batch of : [batch size x 2383]
-
-		print("logits", logits)
-		print("batch_labels", batch_labels)
-		if i % 1000 == 0:
-			print("Loss:", model.loss_function(logits, batch_labels))
-
-		acc += model.total_accuracy(logits, batch_labels)
-		# print("summed num_batches)
-
+		predictions = model.call(batch_inputs) # prediction for a single image
+		acc += model.total_accuracy(predictions, batch_labels)
+		# print("summed accuracy", acc)
 	return acc / float(num_batches)
+
 
 ## --------------------------------------------------------------------------------------
 
@@ -261,16 +241,8 @@ def main():
 	try:
 		# Specify an invalid GPU device
 		with tf.device('/device:' + args.device):
-			print(args.mode)
-			# train_inputs, train_labels, test_inputs, test_labels = get_data()
-
-
-
-			# tjhis is on a small set
-			train_inputs, train_labels, test_inputs, test_labels = df_test_pickles()
+			train_inputs, train_labels, test_inputs, test_labels = get_data()
 			if args.mode == 'train':
-				print("train labels shape", train_labels.shape)
-				# this is on a small set
 				# images = get_train()
 				# images = np.array(images)
 
@@ -281,7 +253,6 @@ def main():
 					print("**** SAVING CHECKPOINT AT END OF EPOCH ****")
 					manager.save()
 			if args.mode == 'test':
-				# print(train_labels.shape)
 				print("--test accuracy--", test(model, test_inputs, test_labels))
 	except RuntimeError as e:
 		print(e)
