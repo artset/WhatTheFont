@@ -13,7 +13,7 @@ import os
 import argparse
 from preprocessing import *
 
-# this time, katherine is here T_TTTT 
+# this time, katherine is here T_TTTT
 
 
 # Killing optional CPU driver warnings
@@ -118,12 +118,12 @@ class DeepFont(tf.keras.Model): #is this how to convert to sequential?
 
 	def total_accuracy(self, logits, labels):
 		"""  given a batch of images [(batch_size * cropped_img) x num_classes]
-			 labels = 
+			 labels =
 			 and the outputted logits, computes accuracy
 		"""
 		print("----------total accuracy ----------")
 
-		acc = 0 
+		acc = 0
 
 		print("input to reshape", logits)
 		sums = self.reshape_test(logits) # batch_size x cropped_img x num_classes
@@ -213,7 +213,7 @@ def main():
 					manager.save()
 			if args.mode == 'test':
 				test_inputs, test_labels = get_test()
-				test_labels = relabel_labels(test_labels)
+				# test_labels = relabel_labels(test_labels)
 				print("--test accuracy--", test(model, test_inputs, test_labels))
 	except RuntimeError as e:
 		print(e)

@@ -329,7 +329,15 @@ def get_train():
 	# train_inputs, train_labels = shuffle_data_for_train(train_inputs, train_labels)
 	return train_inputs, train_labels
 
+def get_test():
+	with h5py.File('combined_test_labels.hdf5', 'r') as hf:
+		test_labels = hf['combined_test_labels'][:]
 
+	with h5py.File('combined_test_inputs.hdf5', 'r') as hf:
+		test_inputs = hf['combined_test_inputs'][:]
+
+	# train_inputs, train_labels = shuffle_data_for_train(train_inputs, train_labels)
+	return test_inputs, test_labels
 
 def big_shuffler():
 	print("EDITED SHUFFLER LEGGO")
@@ -484,19 +492,19 @@ def combine_real_synthetic_test():
 
 def check_labels_and_inputs():
 	with h5py.File('combined_test_labels.hdf5', 'r') as hf:
-		synth_labels = hf['combined_test_labels'][:]
+		combined_labels = hf['combined_test_labels'][:]
 
 	with h5py.File('combined_test_inputs.hdf5', 'r') as hf:
-		synth_inputs = hf['combined_test_inputs'][:]
+		combined_inputs = hf['combined_test_inputs'][:]
 
-	print(synth_labels[0:100])
-	print(synth_inputs[0:100])
+	print("CHECKING... COMBINED LABELS", combined_labels[0:100])
+	print("CHECKING... COMBINED INPUTS", combined_inputs[0:100])
 
 def main():
 	# generate_crop_samples("./real_test_sample")
-	# combine_real_synthetic_test()
-	# check_labels_and_inputs()
-	create_hdf5("./syn_train")
+	combine_real_synthetic_test()
+	check_labels_and_inputs()
+	# create_hdf5("./syn_train")
 
 	# with h5py.File('shuffled_train_labels.hdf5', 'r') as hf:
 	#   synth_inputs = hf['shuffled_train_labels'][:]

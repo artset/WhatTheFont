@@ -124,14 +124,12 @@ class DeepFont(tf.keras.Model): #is this how to convert to sequential?
         return tf.math.reduce_mean(loss)
 
     def total_accuracy(self, probs, labels):
-        """  given a batch of images ( 15 x batch_size), compute accuracy over those images
+        """  given a batch of images ( 10 x batch_size), compute accuracy over those images
         """
         print("----------total accuracy ----------")
-
-        acc = 0 
+        acc = 0
 
         sums = self.reshape_test(logits) # batch_size x cropped_img x num_classes
-
         sums = np.sum(predictions, axis = 1) # sums the columns of the logits
 
         probabilities = tf.nn.softmax(sums) # batchsize x num_classes
@@ -166,8 +164,9 @@ def train(model, train_inputs, train_labels):
 # Test the model by generating some samples.
 def test(model, test_inputs, test_labels):
     # 4 batches with one image in each batch_inputs
-    num_batches = len(test_inputs) // (model.batch_size * 15)
-    cropped_images = 15
+	print("hi")
+    num_batches = len(test_inputs) // (model.batch_size * 10)
+    cropped_images = 10
 
     acc = 0
 
@@ -179,7 +178,9 @@ def test(model, test_inputs, test_labels):
 
         predictions = model.call(batch_inputs) # prediction for a single image
         acc += model.total_accuracy(predictions, batch_labels)
-        # print("summed accuracy", acc)
+
+		if i % 100 == 0:
+        	print("summed accuracy", acc)
     return acc / float(num_batches)
 
 
