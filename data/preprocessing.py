@@ -41,8 +41,8 @@ def generate_crop(img, image_dimension, num_vals):
 		bounds = random.sample(range(0, width-image_dimension), num_vals)
 		for i in range(num_vals):
 			new_img = img.crop((bounds[i], 0, bounds[i] + image_dimension, image_dimension))
-			new_img = new_img.convert("L")
-			new_img.save("./crops/crop" + str(i) + ".png", format='PNG')
+			# new_img = new_img.convert("L")
+			# new_img.save("./crops/crop" + str(i) + ".png", format='PNG')
 
 			new_img = np.array(new_img) / 255.0
 
@@ -369,7 +369,7 @@ def big_shuffler():
 		if not i == j:
 			train_inputs_copy[i*shuffle_size:(i+1)*shuffle_size] = train_inputs[j*shuffle_size:(j+1)*shuffle_size]
 			train_labels_copy[i*shuffle_size:(i+1)*shuffle_size] = train_labels[j*shuffle_size:(j+1)*shuffle_size]
-			
+
 	train_inputs_copy = np.array(train_inputs_copy)
 	train_labels_copy = np.array(train_labels_copy)
 
@@ -394,7 +394,6 @@ def big_shuffler():
 
 #     # train_inputs, train_labels = shuffle_data_for_train(train_inputs, train_labels)
 #     return test_inputs, test_labels
-
 
 
 
@@ -457,24 +456,35 @@ def combine_real_synthetic_test():
 
 	print("finished processing real inputs & labels")
 
-	with h5py.File('shuffled_test_labels.hdf5', 'r') as hf:
-		synth_labels = hf['shuffled_test_labels'][:]
+	with h5py.File('test_labels.hdf5', 'r') as hf:
+		synth_labels = hf['test_labels'][:]
 
-	with h5py.File('shuffled_test_inputs.hdf5', 'r') as hf:
-		synth_inputs = hf['shuffled_test_inputs'][:]
+	with h5py.File('test_inputs.hdf5', 'r') as hf:
+		synth_inputs = hf['test_inputs'][:]
 
 	print("finished uploading synthetic")
 
 	combined_inputs = np.concatenate((synth_inputs, real_inputs), axis=0)
 	combined_labels = np.concatenate((synth_labels, real_labels), axis=0)
 
-	shuffle_and_save(combined_inputs, "combined_test_inputs", combined_labels, "combined_test_labels")
+	shuffle_and_save(combined_inputs, "combined_test_inputs", combined_labels, "combined_test_labels", 10)
 
 	print("finished shufflin")
 
+def check_labels_and_inputs():
+    with h5py.File('combined_test_labels.hdf5', 'r') as hf:
+		synth_labels = hf['combined_test_labels'][:]
+
+	with h5py.File('combined_test_inputs.hdf5', 'r') as hf:
+		synth_inputs = hf['combined_test_inputs'][:]
+
+    print(synth_labels[0:100])
+    print(synth_inputs[0:100])
+
 def main():
 	# generate_crop_samples("./real_test_sample")
-	combine_real_synthetic_test()
+	# combine_real_synthetic_test()
+    check_labels_and_inputs()
 	# big_shuffler()
 
 
