@@ -109,9 +109,9 @@ class DeepFont(tf.keras.Model): #is this how to convert to sequential?
 		return self.model(inputs)
 
 	def loss_function(self, probs, labels):
-		loss = tf.keras.losses.sparse_categorical_crossentropy(labels, probs)
-		# print("probs:")
-		# print(probs)
+		loss = tf.keras.losses.sparse_categorical_crossentropy(labels, probs, from_logits = True)
+		print("probs:")
+		print(probs)
 		print("labels:")
 		print(labels)
 		return loss
@@ -182,7 +182,7 @@ def test(model, test_inputs, test_labels):
 def main():
 
 	model = DeepFont()
-	model.load_weights('weights_2.h5', by_name=True)
+	model.load_weights('weights_leaky_relu.h5', by_name=True)
 
 	# For saving/loading models
 	checkpoint_dir = './checkpoints_df'

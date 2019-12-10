@@ -313,12 +313,12 @@ def get_train():
     with h5py.File('shuffled_train_labels.hdf5', 'r') as hf:
         train_labels = hf['shuffled_train_labels'][:]
 
-    print("train labels finished")
+    print("shuffled train labels finished")
 
     with h5py.File('shuffled_train_inputs.hdf5', 'r') as hf:
         train_inputs = hf['shuffled_train_inputs'][:]
 
-    print("train inputs finished")
+    print("shuffled train inputs finished")
 
     # train_inputs, train_labels = shuffle_data_for_train(train_inputs, train_labels)
     return train_inputs, train_labels
@@ -393,9 +393,9 @@ def combine_real_synth_for_scae():
     return all_data
 
 
-def main():
-    big_shuffler()
+# def main():
+#     big_shuffler()
 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
