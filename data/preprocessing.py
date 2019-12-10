@@ -456,6 +456,8 @@ def combine_real_synth_for_scae():
 def combine_real_synthetic_test():
 	real_inputs, real_labels = get_real_test("./VFR_real_test")
 
+	print(real_labels[:200])
+
 	print("finished processing real inputs & labels")
 
 	with h5py.File('test_labels.hdf5', 'r') as hf:
@@ -469,7 +471,6 @@ def combine_real_synthetic_test():
 	combined_inputs = np.concatenate((synth_inputs, real_inputs), axis=0)
 	combined_labels = np.concatenate((synth_labels, real_labels), axis=0)
 
-	print(combined_labels)
 
 	shuffle_and_save(combined_inputs, "combined_test_inputs", combined_labels, "combined_test_labels", 10)
 
