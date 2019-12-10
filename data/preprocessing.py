@@ -249,10 +249,10 @@ def create_hdf5(root_dir):
 				# print(cropped_images)
 
 				# if file_count < 100:
-				# 	for c in cropped_images:
-				# 		scae_inputs.append(c)
+				#   for c in cropped_images:
+				#       scae_inputs.append(c)
 
-				elif file_count < 200 && file_count >= 100:
+				if file_count < 200 and file_count >= 100:
 					for c in cropped_images:
 						test_inputs.append(c)
 						test_labels.append(font_subset[font_name])
@@ -276,6 +276,9 @@ def create_hdf5(root_dir):
 
 	print(test_labels[:200])
 
+	print(len(test_labels))
+	print(len(test_inputs))
+
 	# shuffle_and_save(train_inputs, "train_inputs", train_labels, "train_labels", 5)
 	# shuffle_and_save(test_inputs, "test_inputs", test_labels, "test_labels", 10)
 	# shuffle_and_save_scae(scae_inputs, "synthetic_scae_inputs")
@@ -290,11 +293,11 @@ def create_hdf5(root_dir):
 	# with h5py.File('train_labels.hdf5', 'w') as f:
 	#     f.create_dataset('train_labels',data=train_labels)
 
-	# with h5py.File('test_inputs.hdf5', 'w') as f:
-	#     f.create_dataset('test_inputs',data=test_inputs)
+	with h5py.File('test_inputs.hdf5', 'w') as f:
+	    f.create_dataset('test_inputs',data=test_inputs)
 
-	# with h5py.File('test_labels.hdf5', 'w') as f:
-	#     f.create_dataset('test_labels',data=test_labels)
+	with h5py.File('test_labels.hdf5', 'w') as f:
+	    f.create_dataset('test_labels',data=test_labels)
 
 	print("Finished preprocessing...")
 
@@ -491,8 +494,9 @@ def check_labels_and_inputs():
 
 def main():
 	# generate_crop_samples("./real_test_sample")
-	combine_real_synthetic_test()
+	# combine_real_synthetic_test()
 	# check_labels_and_inputs()
+	create_hdf5("./syn_train")
 
 	# with h5py.File('shuffled_train_labels.hdf5', 'r') as hf:
 	#   synth_inputs = hf['shuffled_train_labels'][:]
