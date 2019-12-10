@@ -391,7 +391,6 @@ def big_shuffler():
 
 
 
-
 def get_real_test(root_dir):
 
 	with open('150_fonts.json') as json_file:
@@ -402,7 +401,6 @@ def get_real_test(root_dir):
 
 	total_folder_count  = 0
 	for subdir in os.listdir(root_dir): # goes through all font folders
-
 		if subdir in font_subset:
 			subdir_path = root_dir + "/" + subdir
 			font_name = subdir
@@ -416,6 +414,7 @@ def get_real_test(root_dir):
 				image = resize_image(image, 96)
 				cropped_images = generate_crop(image, 96, 10)
 
+
 				for c in cropped_images:
 					real_test_inputs.append(c)
 					real_test_labels.append(font_subset[font_name])
@@ -424,11 +423,8 @@ def get_real_test(root_dir):
 
 		if total_folder_count % 100 == 0:
 			print(total_folder_count, "folders done")
-		total_folder_count += 1
 
-	print("total files:", file_count)
-	real_test_inputs = np.array(real_test_inputs)
-	real_test_labels = np.array(real_test_labels)
+		total_folder_count += 1
 
 	return real_test_inputs, real_test_labels
 
@@ -443,11 +439,11 @@ def combine_real_synth_for_scae():
 	random.shuffle(all_data)
 	return all_data
 
-def get_test():
+# def get_test():
 
 
-	# test_inputs, test_labels = shuffle_data_for_test(test_inputs, test_labels)
-	return test_inputs, test_labels
+# 	# test_inputs, test_labels = shuffle_data_for_test(test_inputs, test_labels)
+# 	return test_inputs, test_labels
 
 def combine_real_synthetic_test():
 	real_inputs, real_labels = get_real_test("./VFR_real_test")
@@ -465,7 +461,7 @@ def combine_real_synthetic_test():
 	combined_inputs = np.concatenate((synth_inputs, real_inputs), axis=0)
 	combined_labels = np.concatenate((synth_labels, real_labels), axis=0)
 
-	shuffle_and_save(combined_inputs, "combined_test_inputs", combined_labels, "combined_test_inputs")
+	shuffle_and_save(combined_inputs, "combined_test_inputs", combined_labels, "combined_test_labels")
 
 	print("finished shufflin")
 
