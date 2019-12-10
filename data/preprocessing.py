@@ -389,15 +389,7 @@ def big_shuffler():
 #     return test_inputs, test_labels
 
 def get_test():
-    with h5py.File('shuffled_test_labels.hdf5', 'r') as hf:
-        test_labels = hf['shuffled_test_labels'][:]
 
-    print("test labels finished")
-
-    with h5py.File('shuffled_test_inputs.hdf5', 'r') as hf:
-        test_inputs = hf['shuffled_test_inputs'][:]
-
-    print("test inputs finished")
 
     # test_inputs, test_labels = shuffle_data_for_test(test_inputs, test_labels)
     return test_inputs, test_labels
@@ -406,10 +398,17 @@ def combine_real_synthetic_test():
     real_inputs, real_labels = get_real_test("./VFR_real_test")
 
     with h5py.File('shuffled_test_labels.hdf5', 'r') as hf:
-        synth__labels = hf['shuffled_test_labels'][:]
-    
+        synth_labels = hf['shuffled_test_labels'][:]
+
     with h5py.File('shuffled_test_inputs.hdf5', 'r') as hf:
         synth_inputs = hf['shuffled_test_inputs'][:]
+
+    combined_inputs = np.concatenate((synth_inputs, real_inputs), axis=0)
+    combined_labels = np.concatenate((synth_labels, real_labels), axis=0)
+
+    shuffle_and_save(inputs, inputs_file_name, labels, labels_file_name, shuffle_size)
+
+    shuffle_and_save(combined_inputs, "combined_test_inputs", combined_labels, "combined_test_inputs")
 
     print("test inputs finished")
 
@@ -417,10 +416,10 @@ def combine_real_synthetic_test():
 
 
 def get_real_test(root_dir):
-    
+
     with open('150_fonts.json') as json_file:
         font_subset = json.load(json_file)
-    
+
     real_test_inputs = []
     real_test_labels = []
 
