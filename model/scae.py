@@ -145,6 +145,29 @@ def train(model, real_images, fake_images):
 
 
     pass
+def test(model, real_images, fake_images):
+    # TODO: This isn't really a test, it's moreso a 'show the outputs of our decoder for poster'
+    # 1) Call the encoder, and decoder outputs
+    # 2) Save encoder + decoder on some samples.
+    real_inputs = real_images[:5]
+    fake_inputs = fake_images[:5]
+
+    inputs = np.concatenate((real_inputs, fake_inputs), axis=0)
+
+    inputs = [Image.fromarray(img) for img in inputs]
+    inputs = [img.convert('L') for img in inputs]
+    babby = 0
+    for img in inputs:
+        img.save("./scae_in/"+ babby + ".png", format='PNG')
+        babby += 1
+
+    res = model(inputs)
+    res = [Image.fromarray(img) for img in res]
+    res = [img.convert('L') for img in res]
+    count = 0
+    for img in res:
+        img.save("./scae_out/"+ count + ".png", format='PNG')
+        count += 1
 
 def main():
 
@@ -180,8 +203,9 @@ def main():
                     print("**** SAVING CHECKPOINT AT END OF EPOCH ****")
                     manager.save()
                     scae.save_weights('./weights/weights_fixed.h5')
-            # if args.mode == 'test':
-            #     test(scae, images)
+            if args.mode == 'test':
+                real_images, fake_images = combine_real_synth_for_scae()
+                test(scae, real_images, fake_images)
     except RuntimeError as e:
         print(e)
 
