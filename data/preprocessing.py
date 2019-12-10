@@ -472,19 +472,19 @@ def combine_real_synthetic_test():
 	print("finished shufflin")
 
 def check_labels_and_inputs():
-    with h5py.File('combined_test_labels.hdf5', 'r') as hf:
+	with h5py.File('combined_test_labels.hdf5', 'r') as hf:
 		synth_labels = hf['combined_test_labels'][:]
 
 	with h5py.File('combined_test_inputs.hdf5', 'r') as hf:
 		synth_inputs = hf['combined_test_inputs'][:]
 
-    print(synth_labels[0:100])
-    print(synth_inputs[0:100])
+	print(synth_labels[0:100])
+	print(synth_inputs[0:100])
 
 def main():
 	# generate_crop_samples("./real_test_sample")
 	# combine_real_synthetic_test()
-    check_labels_and_inputs()
+	check_labels_and_inputs()
 	# big_shuffler()
 
 
