@@ -456,7 +456,7 @@ def combine_real_synth_for_scae():
 def combine_real_synthetic_test():
 	real_inputs, real_labels = get_real_test("./VFR_real_test")
 
-	print(real_labels[:200])
+	print(real_labels[:400])
 
 	print("finished processing real inputs & labels")
 
