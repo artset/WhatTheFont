@@ -216,9 +216,9 @@ def create_hdf5(root_dir):
 		2) Train input & labels for DeepFont model
 		3) Test input & labels for DeepFont Model
 	"""
-	scae_inputs = []
-	train_inputs = []
-	train_labels = []
+	# scae_inputs = []
+	# train_inputs = []
+	# train_labels = []
 	test_inputs = []
 	test_labels = []
 
@@ -248,11 +248,11 @@ def create_hdf5(root_dir):
 
 				# print(cropped_images)
 
-				if file_count < 100:
-					for c in cropped_images:
-						scae_inputs.append(c)
+				# if file_count < 100:
+				# 	for c in cropped_images:
+				# 		scae_inputs.append(c)
 
-				elif file_count < 200:
+				elif file_count < 200 && file_count >= 100:
 					for c in cropped_images:
 						test_inputs.append(c)
 						test_labels.append(font_subset[font_name])
@@ -268,11 +268,13 @@ def create_hdf5(root_dir):
 		total_folder_count += 1
 
 
-	scae_inputs = np.array(scae_inputs)
+	# scae_inputs = np.array(scae_inputs)
 	# train_inputs = np.array(train_inputs)
 	# train_labels = np.array(train_labels)
 	test_inputs = np.array(test_inputs)
 	test_labels = np.array(test_labels)
+
+	print(test_labels[:200])
 
 	# shuffle_and_save(train_inputs, "train_inputs", train_labels, "train_labels", 5)
 	# shuffle_and_save(test_inputs, "test_inputs", test_labels, "test_labels", 10)
