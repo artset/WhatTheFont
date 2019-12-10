@@ -206,7 +206,6 @@ def create_hdf5(root_dir):
 
     total_folder_count  = 0 
     for subdir in os.listdir(root_dir): # goes through all font folders
-        print(subdir)
         
         if subdir in font_subset:
             subdir_path = root_dir + "/" + subdir
@@ -214,8 +213,11 @@ def create_hdf5(root_dir):
 
             # here, we have to split up our files into the three pixels
             file_count = 0
+
+
             for file in os.listdir(subdir_path): # goes through all sample images
-                
+                if file_count >= 200:
+                    break
                 image_path = subdir_path + "/" + file
                 image = alter_image(image_path)
 
@@ -233,10 +235,10 @@ def create_hdf5(root_dir):
                     for c in cropped_images:
                         test_inputs.append(c)
                         test_labels.append(font_subset[font_name])
-                else:
-                    for c in cropped_images:
-                        train_inputs.append(c)
-                        train_labels.append(font_subset[font_name])
+                # else:
+                #     for c in cropped_images:
+                #         train_inputs.append(c)
+                #         train_labels.append(font_subset[font_name])
 
                 file_count += 1
 
@@ -246,14 +248,14 @@ def create_hdf5(root_dir):
 
 
     scae_inputs = np.array(scae_inputs)
-    train_inputs = np.array(train_inputs)
-    train_labels = np.array(train_labels)
+    # train_inputs = np.array(train_inputs)
+    # train_labels = np.array(train_labels)
     test_inputs = np.array(test_inputs)
     test_labels = np.array(test_labels)
 
-    shuffle_and_save(train_inputs, "train_inputs", train_labels, "train_labels", 5)
+    # shuffle_and_save(train_inputs, "train_inputs", train_labels, "train_labels", 5)
     shuffle_and_save(test_inputs, "test_inputs", test_labels, "test_labels", 10)
-    shuffle_and_save_scae(scae_inputs, "scae_inputs")
+    shuffle_and_save_scae(scae_inputs, "synthetic_scae_inputs")
 
 
     # with h5py.File('scae_synthetic_inputs.hdf5', 'w') as f:
@@ -274,6 +276,9 @@ def create_hdf5(root_dir):
     print("Finished preprocessing...")
 
 def shuffle_and_save(inputs, inputs_file_name, labels, labels_file_name, shuffle_size):
+
+    test_inputs = inputs
+    test_labels = labels
     
     temp = list(range(len(test_inputs)//shuffle_size)) # list with all the indices of test_inputs divided by ten?
     random.shuffle(temp) #
@@ -300,8 +305,8 @@ def shuffle_and_save_scae(inputs, inputs_file_name):
 
 
 def get_data_for_scae():
-    with h5py.File('scae_synthetic_inputs.hdf5', 'r') as hf:
-        scae_synthetic_inputs = hf['scae_synthetic_inputs'][:]
+    with h5py.File('synthetic_scae_inputs.hdf5', 'r') as hf:
+        scae_synthetic_inputs = hf['synthetic_scae_inputs'][:]
     return scae_synthetic_inputs
 
 def get_train():
@@ -359,25 +364,8 @@ def combine_real_synth_for_scae():
 
 
 def main():
-    # create_hdf5('./syn_train')
-    # create_font_dictionary()
-    # create_total_font_dictionary()
-    # create_hdf5('./syn_train_one_font')
-    # process_unlabeled_real('./scrape-wtf-new')
+    create_hdf5("./syn_train")
 
-    print("opening labels...")
-
-    with h5py.File('scae_real_inputs_fixed.hdf5', 'r') as hf:
-        test_labels = hf['scae'][:]
-
-    print(test_labels)
-
-    print("---")
-    for img in test_labels:
-        for r in img:
-            for n in r:
-                if n < 0:
-                    print(n)
 
 if __name__ == "__main__":
     main()
