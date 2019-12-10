@@ -275,8 +275,8 @@ def create_hdf5(root_dir):
 	test_labels = np.array(test_labels)
 
 	# shuffle_and_save(train_inputs, "train_inputs", train_labels, "train_labels", 5)
-	shuffle_and_save(test_inputs, "test_inputs", test_labels, "test_labels", 10)
-	shuffle_and_save_scae(scae_inputs, "synthetic_scae_inputs")
+	# shuffle_and_save(test_inputs, "test_inputs", test_labels, "test_labels", 10)
+	# shuffle_and_save_scae(scae_inputs, "synthetic_scae_inputs")
 
 
 	# with h5py.File('scae_synthetic_inputs.hdf5', 'w') as f:
@@ -308,8 +308,8 @@ def shuffle_and_save(inputs, inputs_file_name, labels, labels_file_name, shuffle
 
 	for i, j in enumerate(temp):
 		if not i == j:
-			test_inputs_copy[i*shuffle_size],test_inputs_copy[(i*shuffle_size)+1] = test_inputs[j*shuffle_size],test_inputs[(j*shuffle_size)+1]
-			test_labels_copy[i*shuffle_size],test_labels_copy[(i*shuffle_size)+1] = test_labels[j*shuffle_size],test_labels[(j*shuffle_size)+1]
+			test_inputs_copy[i*shuffle_size:(i+1)*shuffle_size] = test_inputs[j*shuffle_size:(j+1)*shuffle_size]
+			test_labels_copy[i*shuffle_size:(i+1)*shuffle_size] = test_labels[j*shuffle_size:(j+1)*shuffle_size]
 
 	with h5py.File(inputs_file_name + '.hdf5', 'w') as f:
 		f.create_dataset(inputs_file_name,data=test_inputs_copy)
@@ -330,6 +330,7 @@ def get_data_for_scae():
 		scae_synthetic_inputs = hf['synthetic_scae_inputs'][:]
 	return scae_synthetic_inputs
 
+
 def get_train():
 	with h5py.File('shuffled_train_labels.hdf5', 'r') as hf:
 		train_labels = hf['shuffled_train_labels'][:]
@@ -347,6 +348,7 @@ def get_train():
 
 
 def big_shuffler():
+	print("EDITED SHUFFLER LEGGO")
 
 	shuffle_size = 10
 
@@ -366,15 +368,19 @@ def big_shuffler():
 	for i, j in enumerate(temp):
 		if not i == j:
 			train_inputs_copy[i*shuffle_size:(i+1)*shuffle_size] = train_inputs[j*shuffle_size:(j+1)*shuffle_size]
-	        train_labels_copy[i*shuffle_size:(i+1)*shuffle_size] = train_labels[j*shuffle_size:(j+1)*shuffle_size]
-	        
+			train_labels_copy[i*shuffle_size:(i+1)*shuffle_size] = train_labels[j*shuffle_size:(j+1)*shuffle_size]
+			
+	train_inputs_copy = np.array(train_inputs_copy)
+	train_labels_copy = np.array(train_labels_copy)
 
-
+	# print(train_labels[:100])
 	with h5py.File('shuffled_train_inputs.hdf5', 'w') as f:
-		f.create_dataset(shuffled_train_inputs,data=train_inputs_copy)
+		f.create_dataset("shuffled_train_inputs",data=train_inputs_copy)
 
 	with h5py.File('shuffled_train_labels.hdf5', 'w') as f:
-		f.create_dataset(shuffled_train_labels,data=train_labels_copy)
+		f.create_dataset("shuffled_train_labels",data=train_labels_copy)
+
+	print("done!")
 
 
 # def get_small_inputs():
@@ -443,8 +449,8 @@ def combine_real_synth_for_scae():
 # def get_test():
 
 
-# 	# test_inputs, test_labels = shuffle_data_for_test(test_inputs, test_labels)
-# 	return test_inputs, test_labels
+#   # test_inputs, test_labels = shuffle_data_for_test(test_inputs, test_labels)
+#   return test_inputs, test_labels
 
 def combine_real_synthetic_test():
 	real_inputs, real_labels = get_real_test("./VFR_real_test")
@@ -469,6 +475,7 @@ def combine_real_synthetic_test():
 def main():
 	# generate_crop_samples("./real_test_sample")
 	combine_real_synthetic_test()
+	# big_shuffler()
 
 
 if __name__ == "__main__":
