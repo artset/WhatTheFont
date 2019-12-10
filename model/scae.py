@@ -79,14 +79,15 @@ class SCAE(tf.keras.Model):
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
         self.batch_size = 128
         self.epoch = 1
+        self.leaky_relu = tf.keras.layers.LeakyReLU(alpha=0.2)
 
         # Conv2D(64, (3, 3), activation='relu', padding='same')
         self.stride_size = 2
         self.reshape = tf.keras.layers.Reshape((96, 96, 1))
-        self.conv_layer1 = Conv2D(input_shape=(96, 96,1), filters=64, strides=self.stride_size, kernel_size=(3,3), activation='relu', padding='same', name='conv_layer1')
-        self.conv_layer2 = Conv2D(filters=128, strides=self.stride_size, kernel_size=(3,3), activation='relu', padding='same', name='conv_layer2')
-        self.deconv_layer1 = Conv2DTranspose(filters=64, strides=self.stride_size, kernel_size=(3,3), activation='relu', padding='same', name='deconv_layer1')
-        self.deconv_layer2 = Conv2DTranspose(filters=1, strides=self.stride_size, kernel_size=(3,3), activation='relu', padding='same', name='deconv_layer2')
+        self.conv_layer1 = Conv2D(input_shape=(96, 96,1), filters=64, strides=self.stride_size, kernel_size=(3,3), activation=self.leaky_relu, padding='same', name='conv_layer1', dtype=tf.float32)
+        self.conv_layer2 = Conv2D(filters=128, strides=self.stride_size, kernel_size=(3,3), activation=self.leaky_relu, padding='same', name='conv_layer2', dtype=tf.float32)
+        self.deconv_layer1 = Conv2DTranspose(filters=64, strides=self.stride_size, kernel_size=(3,3), activation=self.leaky_relu, padding='same', name='deconv_layer1', dtype=tf.float32)
+        self.deconv_layer2 = Conv2DTranspose(filters=1, strides=self.stride_size, kernel_size=(3,3), activation=self.leaky_relu, padding='same', name='deconv_layer2', dtype=tf.float32)
 
 
     def call(self, inputs):
@@ -107,8 +108,14 @@ class SCAE(tf.keras.Model):
         return d2
 
     def loss(self, original, decoded):
-        original = self.reshape(original)
-        return tf.reduce_sum((original-decoded)**2) / original.shape[0]
+        mse = tf.keras.losses.MeanSquaredError()
+        decoded = tf.squeeze(decoded)
+        return mse(original, decoded)
+        # original = self.reshape(original)
+        # return tf.reduce_sum((original-decoded)**2) / original.shape[0]
+        # original = self.reshape(original)
+        # difference_sq = (original - decoded)**2
+        # return tf.reduce_sum(difference_sq)
 
 def train(model, real_images, fake_images):
     iterations = (len(real_images) + len(fake_images)) // model.batch_size
@@ -143,31 +150,88 @@ def train(model, real_images, fake_images):
     # 1) Call the encoder, and decoder outputs
     # 2) Save encoder + decoder on some samples.
 
-
     pass
-def test(model, real_images, fake_images):
+
+def test(model, real_images, synthetic_images):
     # TODO: This isn't really a test, it's moreso a 'show the outputs of our decoder for poster'
     # 1) Call the encoder, and decoder outputs
     # 2) Save encoder + decoder on some samples.
     real_inputs = real_images[:5]
-    fake_inputs = fake_images[:5]
+    # print(real_inputs[0].shape)
+    # print(np.dtype(real_inputs))
+    # print(real_inputs.shape)
+    # fake_inputs = fake_images[:5]
 
-    inputs = np.concatenate((real_inputs, fake_inputs), axis=0)
+    # inputs = np.concatenate((real_inputs, fake_inputs), axis=0)
+    # print(real_inputs)
 
-    inputs = [Image.fromarray(img) for img in inputs]
-    inputs = [img.convert('L') for img in inputs]
     babby = 0
-    for img in inputs:
-        img.save("./scae_in/"+ babby + ".png", format='PNG')
+    for real in real_inputs:
+        for row in range(len(real)):
+            for col in range(len(real[0])):
+                real[row][col] = int(real[row][col] * 255)
+        # print(real)
+        # print(np.dtype(real))
+        real = np.array(real, dtype=np.uint8)
+        real = Image.fromarray(real)
+        real = real.convert('L')
+        real.save("./scae_in/"+ str(babby) + ".png", format='PNG')
         babby += 1
+    # real = [int(num *255) for row in inputs for num in row]
+    # real = [Image.fromarray(np.array(img)) for img in real]
+    # real = [img.convert('L') for img in real]
+    # babby = 0
+    # for img in real:
+    #     img.save("./scae_in/"+ str(babby) + ".png", format='PNG')
+    #     babby += 1
 
-    res = model(inputs)
-    res = [Image.fromarray(img) for img in res]
-    res = [img.convert('L') for img in res]
+    res = model.call(real_inputs)
+    res = np.array(res)
+    res = np.squeeze(res)
+    print(np.shape(res))
+    # res = np.reshape(res, (96, 96))
+    # print(res[3])
+    # print(res[4])
+    # print(res[4].shape)
+
+
+    # for real in res:
+    #     real = np.squeeze(real)
+    #     print (real.shape)
+        # real *= 255.0/real.max()
+
+    # print(res)
     count = 0
-    for img in res:
-        img.save("./scae_out/"+ count + ".png", format='PNG')
+    for real in res:
+        # print ("------------------------------------")
+        # print(real.shape)
+        print("----------------------")
+        print("ORIGINAL ARRAY")
+        print (real)
+        print("----------------------")
+        real /= np.max(real)/255.0
+        real = np.clip(real, 0, 255)
+        print("NORMED ARRAY")
+        print(real)
+        print("----------------------")
+        for row in range(len(real)):
+            for col in range(len(real[0])):
+                real[row][col] = int(real[row][col])
+        print("BEFORE CONVERT TO IMG")
+        print(real)
+        print("----------------------")
+        real = np.array(real, dtype=np.uint8)
+        real = Image.fromarray(real)
+        real = real.convert('L')
+        real.save("./scae_out/"+ str(count) + ".png", format='PNG')
         count += 1
+    # res = [int(num * 255) for row in res for num in row]
+    # res = [Image.fromarray(np.array(img)) for img in res]
+    # res = [img.convert('L') for img in res]
+    # count = 0
+    # for img in res:
+    #     img.save("./scae_out/"+ str(count) + ".png", format='PNG')
+    #     count += 1
 
 def main():
 
@@ -202,7 +266,7 @@ def main():
                     train(scae, real_images, fake_images)
                     print("**** SAVING CHECKPOINT AT END OF EPOCH ****")
                     manager.save()
-                    scae.save_weights('./weights/weights_fixed.h5')
+                    scae.save_weights('./weights/weights_leaky_relu.h5')
             if args.mode == 'test':
                 real_images, fake_images = combine_real_synth_for_scae()
                 test(scae, real_images, fake_images)
