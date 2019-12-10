@@ -296,27 +296,6 @@ def create_hdf5(root_dir):
 
 	print("Finished preprocessing...")
 
-def shuffle_and_save(inputs, inputs_file_name, labels, labels_file_name, shuffle_size):
-
-	test_inputs = inputs
-	test_labels = labels
-
-	temp = list(range(len(test_inputs)//shuffle_size)) # list with all the indices of test_inputs divided by ten?
-	random.shuffle(temp) #
-	test_inputs_copy = test_inputs[:]
-	test_labels_copy = test_labels[:]
-
-	for i, j in enumerate(temp):
-		if not i == j:
-			test_inputs_copy[i*shuffle_size:(i+1)*shuffle_size] = test_inputs[j*shuffle_size:(j+1)*shuffle_size]
-			test_labels_copy[i*shuffle_size:(i+1)*shuffle_size] = test_labels[j*shuffle_size:(j+1)*shuffle_size]
-
-	with h5py.File(inputs_file_name + '.hdf5', 'w') as f:
-		f.create_dataset(inputs_file_name,data=test_inputs_copy)
-
-	with h5py.File(labels_file_name + '.hdf5', 'w') as f:
-		f.create_dataset(labels_file_name,data=test_labels_copy)
-
 
 def shuffle_and_save_scae(inputs, inputs_file_name):
 	random.shuffle(inputs)
@@ -382,6 +361,29 @@ def big_shuffler():
 
 	print("done!")
 
+def shuffle_and_save(inputs, inputs_file_name, labels, labels_file_name, shuffle_size):
+
+	test_inputs = inputs
+	test_labels = labels
+
+	temp = list(range(len(test_inputs)//shuffle_size)) # list with all the indices of test_inputs divided by ten?
+	random.shuffle(temp) #
+	test_inputs_copy = test_inputs[:]
+	test_labels_copy = test_labels[:]
+
+	for i, j in enumerate(temp):
+		if not i == j:
+			test_inputs_copy[i*shuffle_size:(i+1)*shuffle_size] = test_inputs[j*shuffle_size:(j+1)*shuffle_size]
+			test_labels_copy[i*shuffle_size:(i+1)*shuffle_size] = test_labels[j*shuffle_size:(j+1)*shuffle_size]
+
+	test_inputs_copy = np.array(test_inputs_copy)
+	test_labels_copy = np.array(test_labels_copy)
+
+	with h5py.File(inputs_file_name + '.hdf5', 'w') as f:
+		f.create_dataset(inputs_file_name,data=test_inputs_copy)
+
+	with h5py.File(labels_file_name + '.hdf5', 'w') as f:
+		f.create_dataset(labels_file_name,data=test_labels_copy)
 
 # def get_small_inputs():
 #     with h5py.File('../data/test_inputs.hdf5', 'r') as hf:
@@ -467,6 +469,8 @@ def combine_real_synthetic_test():
 	combined_inputs = np.concatenate((synth_inputs, real_inputs), axis=0)
 	combined_labels = np.concatenate((synth_labels, real_labels), axis=0)
 
+	print(combined_labels)
+
 	shuffle_and_save(combined_inputs, "combined_test_inputs", combined_labels, "combined_test_labels", 10)
 
 	print("finished shufflin")
@@ -483,8 +487,13 @@ def check_labels_and_inputs():
 
 def main():
 	# generate_crop_samples("./real_test_sample")
-	# combine_real_synthetic_test()
-	check_labels_and_inputs()
+	combine_real_synthetic_test()
+	# check_labels_and_inputs()
+
+	# with h5py.File('shuffled_train_labels.hdf5', 'r') as hf:
+	#   synth_inputs = hf['shuffled_train_labels'][:]
+
+	# print(synth_inputs[100:200])
 	# big_shuffler()
 
 
