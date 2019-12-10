@@ -127,6 +127,7 @@ class DeepFont(tf.keras.Model): #is this how to convert to sequential?
 		print("----------total accuracy ----------")
 		acc = 0
 
+		# This reshaped layer does not work. not sure what's wrong with it, since sizes seem to match..
 		reshaped = self.reshape_test(logits) # batch_size x cropped_img x num_classes
 		sums = np.sum(reshaped, axis = 0) # sums the columns of the logits
 
