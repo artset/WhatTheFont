@@ -204,9 +204,9 @@ def create_hdf5(root_dir):
     with open('150_fonts.json') as json_file:
         font_subset = json.load(json_file)
 
-    total_folder_count  = 0 
+    total_folder_count  = 0
     for subdir in os.listdir(root_dir): # goes through all font folders
-        
+
         if subdir in font_subset:
             subdir_path = root_dir + "/" + subdir
             font_name = subdir
@@ -279,7 +279,7 @@ def shuffle_and_save(inputs, inputs_file_name, labels, labels_file_name, shuffle
 
     test_inputs = inputs
     test_labels = labels
-    
+
     temp = list(range(len(test_inputs)//shuffle_size)) # list with all the indices of test_inputs divided by ten?
     random.shuffle(temp) #
     test_inputs_copy = test_inputs[:]
@@ -352,20 +352,19 @@ def get_test():
 
 
 def combine_real_synth_for_scae():
-    with h5py.File('scae_synthetic_inputs.hdf5', 'r') as synth, h5py.File('scae_real_inputs_fixed.hdf5', 'r') as real:
-        synth_data = synth['scae_synthetic_inputs'][:]
+    with h5py.File('synthetic_scae_inputs.hdf5', 'r') as synth, h5py.File('scae_real_inputs_fixed.hdf5', 'r') as real:
+        synth_data = synth['synthetic_scae_inputs'][:]
         real_data = real['scae'][:]
-    
+
     all_data = np.concatenate((synth_data, real_data), axis=0)
 
     random.shuffle(all_data)
-
     return all_data
 
-
-def main():
-    create_hdf5("./syn_train")
-
-
-if __name__ == "__main__":
-    main()
+#
+# def main():
+#     create_hdf5("./syn_train")
+#
+#
+# if __name__ == "__main__":
+#     main()

@@ -170,12 +170,11 @@ def create_pickle(root_dir):
         print("Finished preprocessing...")
 
 def combine_real_synth_for_scae():
-    with h5py.File('scae_synthetic_inputs.hdf5', 'r') as synth, h5py.File('scae_real_inputs.hdf5', 'r') as real:
-        synth_data = synth['scae_synthetic_inputs'][:]
+    with h5py.File('synthetic_scae_inputs.hdf5', 'r') as synth, h5py.File('scae_real_inputs_fixed.hdf5', 'r') as real:
+        synth_data = synth['synthetic_scae_inputs'][:]
         real_data = real['scae'][:]
-    
-    random.shuffle(synth_data)
 
+    random.shuffle(synth_data)
     return real_data, synth_data
 
 def shuffle_data(data):
@@ -274,49 +273,33 @@ def process_unlabeled_real(root_dir):
     #     pickle.dump(scae_inputs, output)
     return
 
-def relabel_labels(labels):
-    new_labels = np.zeros(len(labels))
-
-    with open('backwards_font_dict.json') as json_file:
-        backwards_font_dict = json.load(json_file)
-
-    with open('150_fonts.json') as json_file:
-        new_indexing = json.load(json_file)
-
-
-    for i in range(0, len(labels))
-        old_index = labels[i]
-        name = backwards_font_dict[str(old_index)]
-        new_labels[i] = new_indexing[name]
-
-    return new_labels
-
-def main():
-    # our small sample test
-    # create_pickle("real_test_sample")
-    #
-    # pickled = open('scae_inputs.pkl', 'rb')
-    # array = pickle.load(pickled)
-    # pickled.close()
-    #
-    # count = 0
-    # for img in array:
-    #     final_image = img.convert("L")
-    #     image_file = "test_img/" +str(count) + "img.png"
-    #     final_image.save(image_file, format='PNG')
-    #     count += 1
-    #
-    # create_pickle("real_test_sample")
-    # print("Start processing!")
-    # process_unlabeled_real("./scrape-wtf-new")
-    # process_unlabeled_real("./syn_train_one_font/ACaslonPro-Bold")
-
-    lst = [4, 203]
-
-    print(relabel_labels(lst))
-
-
-
-
-if __name__ == "__main__":
-    main()
+# 
+# def main():
+#     # our small sample test
+#     # create_pickle("real_test_sample")
+#     #
+#     # pickled = open('scae_inputs.pkl', 'rb')
+#     # array = pickle.load(pickled)
+#     # pickled.close()
+#     #
+#     # count = 0
+#     # for img in array:
+#     #     final_image = img.convert("L")
+#     #     image_file = "test_img/" +str(count) + "img.png"
+#     #     final_image.save(image_file, format='PNG')
+#     #     count += 1
+#     #
+#     # create_pickle("real_test_sample")
+#     # print("Start processing!")
+#     # process_unlabeled_real("./scrape-wtf-new")
+#     # process_unlabeled_real("./syn_train_one_font/ACaslonPro-Bold")
+#
+#     lst = [4, 203]
+#
+#     print(relabel_labels(lst))
+#
+#
+#
+#
+# if __name__ == "__main__":
+#     main()

@@ -6,7 +6,7 @@ import tensorflow_hub as hub
 import sys
 sys.path.append('../data')
 
-from preprocessing import *
+from scae_preprocessing import *
 import numpy as np
 
 from imageio import imwrite
@@ -110,19 +110,20 @@ class SCAE(tf.keras.Model):
         original = self.reshape(original)
         return tf.reduce_sum((original-decoded)**2) / original.shape[0]
 
-def train(model, inputs):
-    iterations = len(inputs) // model.batch_size
-
+def train(model, real_images, fake_images):
+    iterations = (len(real_images) + len(fake_images)) // model.batch_size
+    fake_batch = len(fake_images) // iterations
+    real_batch = len(real_images) // iterations
 
     total_loss = 0
 
     for i in range(iterations):
-        image_inputs = inputs[i * model.batch_size : (i+1) * model.batch_size]
-        # real_inputs = real_images[i * real_batch : (i+1) * real_batch]
-        # fake_inputs = fake_images[i * fake_batch : (i+1) * fake_batch]
+        # image_inputs = images[i * model.batch_size : (i+1) * model.batch_size]
+        real_inputs = real_images[i * real_batch : (i+1) * real_batch]
+        fake_inputs = fake_images[i * fake_batch : (i+1) * fake_batch]
 
-        # inputs = np.concatenate((real_inputs, fake_inputs), axis=0)
-        
+        inputs = np.concatenate((real_inputs, fake_inputs), axis=0)
+        random.shuffle(inputs)
 
         with tf.GradientTape() as tape:
             res = model(inputs)
@@ -138,8 +139,6 @@ def train(model, inputs):
     total_loss = total_loss / float(iterations)
 
     print("AVERAGE LOSS THIS EPOCH", total_loss)
-
-def test(model, images):
     # TODO: This isn't really a test, it's moreso a 'show the outputs of our decoder for poster'
     # 1) Call the encoder, and decoder outputs
     # 2) Save encoder + decoder on some samples.
@@ -173,15 +172,14 @@ def main():
         with tf.device('/device:' + args.device):
             if args.mode == 'train':
                 # real_images, fake_images = combine_real_synth_for_scae()
-                all_data = combine_real_synth_for_scae()
-
+                real_images, fake_images = combine_real_synth_for_scae()
                 for epoch in range(0, args.num_epochs):
                     print('========================== EPOCH %d  ==========================' % epoch)
                     # train(scae, real_images, fake_images)
-                    train(scae, all_data)
+                    train(scae, real_images, fake_images)
                     print("**** SAVING CHECKPOINT AT END OF EPOCH ****")
                     manager.save()
-                    scae.save_weights('./weights/weights_2.h5')
+                    scae.save_weights('./weights/weights_fixed.h5')
             # if args.mode == 'test':
             #     test(scae, images)
     except RuntimeError as e:
