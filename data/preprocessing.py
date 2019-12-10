@@ -365,15 +365,16 @@ def big_shuffler():
 
 	for i, j in enumerate(temp):
 		if not i == j:
-			train_inputs_copy[i*shuffle_size],train_inputs_copy[(i*shuffle_size)+1] = train_inputs[j*shuffle_size],train_inputs[(j*shuffle_size)+1]
-			train_labels_copy[i*shuffle_size],train_labels_copy[(i*shuffle_size)+1] = train_labels[j*shuffle_size],train_labels[(j*shuffle_size)+1]
+			train_inputs_copy[i*shuffle_size:(i+1)*shuffle_size] = train_inputs[j*shuffle_size:(j+1)*shuffle_size]
+	        train_labels_copy[i*shuffle_size:(i+1)*shuffle_size] = train_labels[j*shuffle_size:(j+1)*shuffle_size]
+	        
+
 
 	with h5py.File('shuffled_train_inputs.hdf5', 'w') as f:
 		f.create_dataset(shuffled_train_inputs,data=train_inputs_copy)
 
 	with h5py.File('shuffled_train_labels.hdf5', 'w') as f:
 		f.create_dataset(shuffled_train_labels,data=train_labels_copy)
-
 
 
 # def get_small_inputs():
