@@ -402,6 +402,61 @@ def get_test():
     # test_inputs, test_labels = shuffle_data_for_test(test_inputs, test_labels)
     return test_inputs, test_labels
 
+def combine_real_synthetic_test():
+    real_inputs, real_labels = get_real_test("./VFR_real_test")
+
+    with h5py.File('shuffled_test_labels.hdf5', 'r') as hf:
+        synth__labels = hf['shuffled_test_labels'][:]
+    
+    with h5py.File('shuffled_test_inputs.hdf5', 'r') as hf:
+        synth_inputs = hf['shuffled_test_inputs'][:]
+
+    print("test inputs finished")
+
+
+
+
+def get_real_test(root_dir):
+    
+    with open('150_fonts.json') as json_file:
+        font_subset = json.load(json_file)
+    
+    real_test_inputs = []
+    real_test_labels = []
+
+    total_folder_count  = 0
+    for subdir in os.listdir(root_dir): # goes through all font folders
+
+        if subdir in font_subset:
+            subdir_path = root_dir + "/" + subdir
+            font_name = subdir
+
+            # here, we have to split up our files into the three pixels
+            file_count = 0
+
+            for file in os.listdir(subdir_path): # goes through all sample images
+                image_path = subdir_path + "/" + file
+                image = alter_image(image_path)
+                image = resize_image(image, 96)
+                cropped_images = generate_crop(image, 96, 10)
+
+                for c in cropped_images:
+                    real_test_inputs.append(c)
+                    real_test_labels.append(font_subset[font_name])
+
+                file_count += 1
+
+        if total_folder_count % 100 == 0:
+            print(total_folder_count, "folders done")
+        total_folder_count += 1
+
+    print("total files:", file_count)
+    real_test_inputs = np.array(real_test_inputs)
+    real_test_labels = np.array(real_test_labels)
+
+    return real_test_inputs, real_test_labels
+
+
 
 def combine_real_synth_for_scae():
     with h5py.File('synthetic_scae_inputs.hdf5', 'r') as synth, h5py.File('scae_real_inputs_fixed.hdf5', 'r') as real:
