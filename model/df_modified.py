@@ -100,7 +100,6 @@ class DeepFont(tf.keras.Model): #is this how to convert to sequential?
 
 		self.optimizer = tf.keras.optimizers.Adam(learning_rate = 0.001)
 
-	@tf.function
 	def call(self, inputs):
 		"""
 		Executes the generator model on the random noise vectors.
@@ -116,23 +115,23 @@ class DeepFont(tf.keras.Model): #is this how to convert to sequential?
 
 		return result
 
-	@tf.function
 	def loss_function(self, logits, labels):
 		# print("logits", logits)
 		# print("labels", labels)
 		loss = tf.keras.losses.sparse_categorical_crossentropy(labels, logits, from_logits = True)
 		return tf.math.reduce_mean(loss)
 
-    def total_accuracy(self, probs, labels):
-        """  given a batch of images ( 10 x batch_size), compute accuracy over those images
-        """
-        print("----------total accuracy ----------")
-        acc = 0
+	def total_accuracy(self, logits, labels):
+		"""  given a batch of images ( 10 x batch_size), compute accuracy over those images
+		"""
+		print("----------total accuracy ----------")
+		acc = 0
 
-        sums = self.reshape_test(logits) # batch_size x cropped_img x num_classes
-        sums = np.sum(predictions, axis = 1) # sums the columns of the logits
+		reshaped = self.reshape_test(logits) # batch_size x cropped_img x num_classes
+		sums = np.sum(reshaped, axis = 0) # sums the columns of the logits
 
 		probabilities = tf.nn.softmax(sums) # batchsize x num_classes
+		print("SHAPE OF PROBABILITIES: ", probabilities.shape)
 
 		top_five = np.argsort(probabilities, axis = 1)[:][-5:]
 
@@ -141,6 +140,21 @@ class DeepFont(tf.keras.Model): #is this how to convert to sequential?
 				acc += 1
 
 		return acc / float(len(labels))
+
+	def get_top_five(self, predictions):
+		sums = np.sum(predictions, axis = 0) # sums the columns of the logits shape is (150,)
+		print("SUMMED", sums)
+		print("SUMEMD SHAPE ", sums.shape)
+
+		probabilities = tf.nn.softmax(sums) # shape is (150, )
+		print("PROBABILITIES: ", probabilities)
+
+		top_five = np.argsort(probabilities, axis = 0)
+		print(top_five[0:5])
+		return top_five
+
+
+
 
 
 
@@ -163,10 +177,10 @@ def train(model, train_inputs, train_labels):
 
 # Test the model by generating some samples.
 def test(model, test_inputs, test_labels):
-    # 4 batches with one image in each batch_inputs
+	# 4 batches with one image in each batch_inputs
 	print("hi")
-    num_batches = len(test_inputs) // (model.batch_size * 10)
-    cropped_images = 10
+	num_batches = len(test_inputs) // (model.batch_size * 10)
+	cropped_images = 10
 
 	acc = 0
 
@@ -176,20 +190,37 @@ def test(model, test_inputs, test_labels):
 		batch_inputs = test_inputs[i * model.batch_size * cropped_images: (i+1) * model.batch_size * cropped_images]
 		batch_labels = test_labels[i * model.batch_size : (i+1) * model.batch_size]
 
-        predictions = model.call(batch_inputs) # prediction for a single image
-        acc += model.total_accuracy(predictions, batch_labels)
+		predictions = model.call(batch_inputs) # prediction for a single image
+		print(predictions.shape)
+		acc += model.total_accuracy(predictions, batch_labels)
 
-		if i % 100 == 0:
-        	print("summed accuracy", acc)
-    return acc / float(num_batches)
+		if i % 10 == 0:
+			print("summed accuracy", acc)
+	return acc / float(num_batches)
+
+def test_single_img(model, image_path):
+	# 4 batches with one image in each batch_inputs
+	crops = []
+
+	image = alter_image(image_path)
+	image = resize_image(image, 96)
+	cropped_images = generate_crop(image, 96, 10)
+
+	for c in cropped_images:
+		crops.append(c)
+	
+	predictions = model.call(crops) # prediction for a single image
+	print(predictions.shape)
+	top_5 = model.get_top_five(predictions)
+
+	# print(top_5)
+
 
 
 ## --------------------------------------------------------------------------------------
 
 def main():
 	# Initialize generator and discriminator models
-
-
 	model = DeepFont()
 	model.load_weights('./weights_leaky_relu.h5', by_name=True)
 
@@ -202,7 +233,7 @@ def main():
 	if not os.path.exists(args.out_dir):
 		os.makedirs(args.out_dir)
 
-	if args.restore_checkpoint or args.mode == 'test':
+	if args.restore_checkpoint or args.mode == 'test' or args.mode == 'single_img':
 		# restores the lates checkpoint using from the manager
 		print("Running test mode...")
 		checkpoint.restore(manager.latest_checkpoint)
@@ -222,6 +253,8 @@ def main():
 			if args.mode == 'test':
 				test_inputs, test_labels = get_test()
 				print("--test accuracy--", test(model, test_inputs, test_labels))
+			if args.mode == "single_img":
+				test_single_img(model, './BodoniStd93.png')
 	except RuntimeError as e:
 		print(e)
 
