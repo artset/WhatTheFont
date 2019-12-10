@@ -324,6 +324,37 @@ def get_train():
     return train_inputs, train_labels
 
 
+
+def big_shuffler():
+
+    shuffle_size = 10
+
+    with h5py.File('train_inputs.hdf5', 'r') as hf:
+        train_inputs = hf['train_inputs'][:]
+
+    print("train labels finished")
+
+    with h5py.File('train_labels.hdf5', 'r') as hf:
+        train_labels = hf['train_labels'][:]
+
+    temp = list(range(len(train_inputs)//shuffle_size)) # list with all the indices of test_inputs divided by ten?
+    random.shuffle(temp) #
+    train_inputs_copy = train_inputs[:]
+    train_labels_copy = train_labels[:]
+
+    for i, j in enumerate(temp):
+        if not i == j:
+            train_inputs_copy[i*shuffle_size],train_inputs_copy[(i*shuffle_size)+1] = train_inputs[j*shuffle_size],train_inputs[(j*shuffle_size)+1]
+            train_labels_copy[i*shuffle_size],train_labels_copy[(i*shuffle_size)+1] = train_labels[j*shuffle_size],train_labels[(j*shuffle_size)+1]
+
+    with h5py.File('shuffled_train_inputs.hdf5', 'w') as f:
+        f.create_dataset(shuffled_train_inputs,data=train_inputs_copy)
+
+    with h5py.File('shuffled_train_labels.hdf5', 'w') as f:
+        f.create_dataset(shuffled_train_labels,data=train_labels_copy)
+
+
+
 # def get_small_inputs():
 #     with h5py.File('../data/test_inputs.hdf5', 'r') as hf:
 #         test_inputs = hf['test_inputs'][:]
@@ -361,10 +392,10 @@ def combine_real_synth_for_scae():
     random.shuffle(all_data)
     return all_data
 
-#
-# def main():
-#     create_hdf5("./syn_train")
-#
-#
-# if __name__ == "__main__":
-#     main()
+
+def main():
+    big_shuffler()
+
+
+if __name__ == "__main__":
+    main()
