@@ -21,3 +21,4 @@ data/test_labels.hdf5
 data/scae_synethetic_inputs.hdf5
 data/train_inputs.hdf5
 data/train_labels.hdf5
+data/crops

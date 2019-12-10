@@ -41,6 +41,9 @@ def generate_crop(img, image_dimension, num_vals):
         bounds = random.sample(range(0, width-image_dimension), num_vals)
         for i in range(num_vals):
             new_img = img.crop((bounds[i], 0, bounds[i] + image_dimension, image_dimension))
+            new_img = new_img.convert("L")
+            new_img.save("./crops/crop" + str(i) + ".png", format='PNG')
+
             new_img = np.array(new_img) / 255.0
 
             # for row in new_img:
@@ -187,6 +190,24 @@ def process_unlabeled_real(root_dir):
          f.create_dataset('scae',data=scae_inputs)
 
 
+def generate_crop_samples(root_dir):
+    count = 0
+
+    for subdir in os.listdir(root_dir): # goes through all font folders
+
+        subdir_path = root_dir + "/" + subdir
+        font_name = subdir
+
+        for file in os.listdir(subdir_path):
+            if count == 3:
+                break
+
+            image_path = subdir_path + "/" + file
+            image = alter_image(image_path)
+            image = resize_image(image, 96)
+            cropped_images = generate_crop(image, 96, 10)
+
+            count+=1
 
 def create_hdf5(root_dir):
     """ Input: Root directory (string)
@@ -393,8 +414,8 @@ def combine_real_synth_for_scae():
     return all_data
 
 
-# def main():
-#     big_shuffler()
+def main():
+    generate_crop_samples("./real_test_sample")
 
 
 # if __name__ == "__main__":
