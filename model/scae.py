@@ -156,7 +156,7 @@ def test(model, real_images, synthetic_images):
     # TODO: This isn't really a test, it's moreso a 'show the outputs of our decoder for poster'
     # 1) Call the encoder, and decoder outputs
     # 2) Save encoder + decoder on some samples.
-    real_inputs = real_images[:5]
+    real_inputs = real_images[:40]
     # print(real_inputs[0].shape)
     # print(np.dtype(real_inputs))
     # print(real_inputs.shape)

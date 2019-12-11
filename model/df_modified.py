@@ -13,7 +13,7 @@ import os
 import argparse
 from preprocessing import *
 
-# Killing optional CPU driver warnings
+# Killing optional CPU oodriver warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 gpu_available = tf.test.is_gpu_available()
@@ -51,7 +51,7 @@ parser.add_argument('--device', type=str, default='GPU:0' if gpu_available else 
 
 args = parser.parse_args()
 
-
+performance_dict = {}
 
 class DeepFont(tf.keras.Model): #is this how to convert to sequential?
     def __init__(self):
@@ -111,13 +111,19 @@ class DeepFont(tf.keras.Model): #is this how to convert to sequential?
 
         top_five = np.argsort(probs, axis = 1) # 256 x 150
         top_five = np.array(top_five).reshape((self.batch_size, 150))
-        top_five = top_five[:, -5:] # 5 x 150
+        top_five = top_five[:, -1:] # 5 x 150
 
         for i in range (len(labels)):
+            if labels[i] not in performance_dict:
+                performance_dict[labels[i]] = 0
+
             if labels[i] in top_five[i]:
                 acc += 1
+                performance_dict[labels[i]] += 1
+            else:
+                performance_dict[labels[i]] -= 1
 
-        return acc / float(self.batch_size)
+        return (acc / float(self.batch_size))
 
     def get_top_five(self, predictions):
         predictions = np.sum(predictions, axis = 0) # sums the columns of the logits shape is (150,)
@@ -163,6 +169,9 @@ def train(model, train_inputs, train_labels):
 def test(model, test_inputs, test_labels):
     # 4 batches with one image in each batch_inputs
 
+    # with open('150_fonts_backwards.json') as json_file:
+    #         font_subset = json.load(json_file)
+
     num_batches = len(test_inputs) // (model.batch_size)
 
 
@@ -185,6 +194,15 @@ def test(model, test_inputs, test_labels):
 
     average_accuracy = acc / float(num_batches)
     print("average accuracy:", average_accuracy)
+
+    count = Counter(performance_dict)
+
+    low = count.most_common()[:-4:-1]
+    high = count.most_common(3)
+    print(low)
+    print(high)
+
+    
     return average_accuracy
 
 def test_single_img(model, image_path):
