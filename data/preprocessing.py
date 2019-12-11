@@ -115,7 +115,6 @@ def create_font_dictionary():
 	with open('150_fonts.json', 'w') as fp:
 		json.dump(dict, fp,  indent=4)
 
-	#     #     pickle.dump(cropped_images, output)
 
 def create_total_font_dictionary():
 	path = "./fontlist.txt"
@@ -154,6 +153,7 @@ def get_font_dict():
 	with open('font_dict.json') as json_file:
 		font_dict = json.load(json_file)
 	return font_dict
+
 
 def process_unlabeled_real(root_dir):
 	""" Input: Root directory (string)
@@ -502,8 +502,8 @@ def check_labels_and_inputs():
 
 def main():
 	# generate_crop_samples("./real_test_sample")
-	combine_real_synthetic_test()
-	check_labels_and_inputs()
+	# combine_real_synthetic_test()
+	# check_labels_and_inputs()
 	# create_hdf5("./syn_train")
 
 	# with h5py.File('shuffled_train_labels.hdf5', 'r') as hf:
@@ -511,6 +511,20 @@ def main():
 
 	# print(synth_inputs[100:200])
 	# big_shuffler()
+
+
+	path = "./150_fonts.txt"
+
+	f = open(path, 'r')
+	content = f.read().split()
+	dict = {}
+	count = 0
+	for line in content:
+		print(line)
+		dict[str(count)] = line
+		count += 1
+	with open('150_fonts_backwards.json', 'w') as fp:
+		json.dump(dict, fp,  indent=4)
 
 
 if __name__ == "__main__":

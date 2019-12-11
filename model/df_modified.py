@@ -59,7 +59,7 @@ class DeepFont(tf.keras.Model): #is this how to convert to sequential?
         The model for the generator network is defined here.
         """
         super(DeepFont, self).__init__()
-        self.batch_size = 256
+        self.batch_size = 128
         self.stride_size = 1
         self.num_classes = 150
 
@@ -78,11 +78,11 @@ class DeepFont(tf.keras.Model): #is this how to convert to sequential?
         self.model.add(tf.keras.layers.Conv2D(256, kernel_size=(3), strides=(self.stride_size), padding='same', activation='relu'))
         self.model.add(tf.keras.layers.Conv2D(512, kernel_size=(3,3), strides=(self.stride_size), padding='same', activation='relu'))
         self.model.add(tf.keras.layers.Conv2D(1024, kernel_size=(3,3), strides=(self.stride_size), padding='same', activation='relu'))
-        self.model.add(tf.keras.layers.Conv2D(512, kernel_size=(3,3), strides=(self.stride_size), padding='same', activation='relu'))
+        self.model.add(tf.keras.layers.Conv2D(256, kernel_size=(3,3), strides=(self.stride_size), padding='same', activation='relu'))
 
         self.final_dense = tf.keras.layers.Dense(self.num_classes, activation='softmax')
 
-        self.optimizer = tf.keras.optimizers.Adam(learning_rate = 0.01)
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate = 0.002)
 
     def call(self, inputs):
         """
@@ -118,18 +118,27 @@ class DeepFont(tf.keras.Model): #is this how to convert to sequential?
             if labels[i] in top_five[i]:
                 acc += 1
 
-        return acc / float(self.batch_size))
+        return acc / float(self.batch_size)
 
     def get_top_five(self, predictions):
-        sums = np.sum(predictions, axis = 0) # sums the columns of the logits shape is (150,)
-        print("SUMMED", sums)
-        print("SUMEMD SHAPE ", sums.shape)
+        predictions = np.sum(predictions, axis = 0) # sums the columns of the logits shape is (150,)
 
-        probabilities = tf.nn.softmax(sums) # shape is (150, )
+
+
+        # probabilities = tf.nn.softmax(sums) # shape is (150, )
         print("PROBABILITIES: ", probabilities)
+        print("----")
 
-        top_five = np.argsort(probabilities, axis = 0)
-        print(top_five[-5:])
+        top_five = np.argsort(predictions, axis = 0)
+        top_five = np.array(top_five)
+        top_five = top_five[-5:]
+
+        # key int : value str
+        with open('150_fonts_backwards.json') as json_file:
+            font_subset = json.load(json_file)
+
+        for num in top_five:
+            print(font_subset[str(num)])
         return top_five
 
 
@@ -208,7 +217,7 @@ def main():
     checkpoint_dir = './checkpoints_df_modified'
     checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
     checkpoint = tf.train.Checkpoint(model = model)
-    manager = tf.train.CheckpointManager(checkpoint, checkpoint_dir, max_to_keep=3)
+    manager = tf.train.CheckpointManager(checkpoint, checkpoint_dir, max_to_keep=10)
     # Ensure the output directory exists
     # if not os.path.exists(args.out_dir):
     #     os.makedirs(args.out_dir)
@@ -234,7 +243,7 @@ def main():
                 test_inputs, test_labels = get_test()
                 print("--test accuracy--", test(model, test_inputs, test_labels))
             if args.mode == "single_img":
-                test_single_img(model, './BodoniStd93.png')
+                test_single_img(model, './cropped_ritchie.jpg')
     except RuntimeError as e:
         print(e)
 
