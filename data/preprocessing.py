@@ -237,34 +237,39 @@ def get_data_for_autoencoder(real_filename, synthetic_filename):
 
 
 # ----------------------------- DEEPFONT SPECIFIC FUNCS --------------------------------------#
-def get_train_df():
+def get_train_df(inputs_filename, labels_filename):
 	""" Input: None
 		Output: None
 
 		Opens the train inputs and train labels and returns them.
 	"""
-	with h5py.File('shuffled_train_labels.hdf5', 'r') as hf:
-		train_labels = hf['shuffled_train_labels'][:]
+	with h5py.File(inputs_filename, 'r') as hf:
+		train_inputs = hf[inputs_filename[0:-5]][:]
 
-	print("shuffled train labels finished")
+	print("Finished opening train inputs")
 
-	with h5py.File('shuffled_train_inputs.hdf5', 'r') as hf:
-		train_inputs = hf['shuffled_train_inputs'][:]
+	with h5py.File(labels_filename, 'r') as hf:
+		train_labels = hf[labels_filename[0:-5]][:]
 
-	print("shuffled train inputs finished")
+	print("Finished opening train labels")
+
 	return train_inputs, train_labels
 
-def get_test_df():
+def get_test_df(inputs_filename, labels_filename):
 	""" Input: None
 		Output: None
 
 		Opens the test inputs and test labels and returns them.
 	"""
-	with h5py.File('combined_test_labels.hdf5', 'r') as hf:
-		test_labels = hf['combined_test_labels'][:]
+	with h5py.File(labels_filename, 'r') as hf:
+		test_labels = hf[labels_filename[0:-5]][:]
 
-	with h5py.File('combined_test_inputs.hdf5', 'r') as hf:
-		test_inputs = hf['combined_test_inputs'][:]
+	print("Finished opening test labels")
+
+	with h5py.File(inputs_filename, 'r') as hf:
+		test_inputs = hf[inputs_filename[0:-5]][:]
+
+	print("Finished opening test inputs")
 
 	return test_inputs, test_labels
 

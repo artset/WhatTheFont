@@ -135,9 +135,6 @@ class DeepFont(tf.keras.Model):
         """
         predictions = np.sum(predictions, axis = 0) # sums the columns of the logits shape is (150,)
 
-        print("PROBABILITIES: ", probabilities)
-        print("----")
-
         top_five = np.argsort(predictions, axis = 0)
         top_five = np.array(top_five)
         top_five = top_five[-5:]
@@ -250,7 +247,7 @@ def main():
         # Specify an invalid GPU device
         with tf.device('/device:' + args.device):
             if args.mode == 'train':
-                train_inputs, train_labels = get_train_df()
+                train_inputs, train_labels = get_train_df('./shuffled_train_inputs.hdf5', './shuffled_train_labels.hdf5')
 
                 for epoch in range(0, args.num_epochs):
                     print('========================== EPOCH %d  ==========================' % epoch)
