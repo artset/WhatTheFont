@@ -97,12 +97,12 @@ def alter_image(image_path):
 	blurred_image = cv2.GaussianBlur(noised_image, ksize = (3, 3), sigmaX = random.uniform(2.5, 3.5))
 
 	# perspective transform and translation
-	rotatation_angle = [-4, -2, 0, 2, 4]
+	rotation_angle = [-4, -2, 0, 2, 4]
 	translate_x = [-5, -3, 0, 3, 5]
 	translate_y = [-5, -3, 0, 3, 5]
-	angle = random.choice(rotatation_angle)
-	angle = random.choice(rotatation_angle)
-	angle = random.choice(rotatation_angle)
+	angle = random.choice(rotation_angle)
+	angle = random.choice(rotation_angle)
+	angle = random.choice(rotation_angle)
 	tx = random.choice(translate_x)
 	ty = random.choice(translate_y)
 
@@ -195,13 +195,13 @@ def process_unlabeled_real(root_dir):
 
 		Preprocess the unlabeled real data.
 	"""
-	scae_inputs = []
+	ae_real_inputs = []
 
 	print("Starting processing of unlabeled real...")
 	count = 0
 
 	for f in os.scandir(root_dir):
-		if count % 13 == 0 and (f.name.endswith(".jpeg") or f.name.endswith(".jpg") or f.name.endswith(".png")):
+		if (f.name.endswith(".jpeg") or f.name.endswith(".jpg") or f.name.endswith(".png")):
 
 			image_path = f.path
 
@@ -215,28 +215,23 @@ def process_unlabeled_real(root_dir):
 			cropped_images = generate_crop(image, 96, 10)
 
 			for c in cropped_images:
-				scae_inputs.append(c)
+				ae_real_inputs.append(c)
 		count += 1
 
-	print("Number of images in file: ", len(scae_inputs))
-	with h5py.File('scae_real_inputs_fixed.hdf5', 'w') as f:
-		 f.create_dataset('scae',data=scae_inputs)
+	print("Number of images in file: ", len(ae_real_inputs))
+	with h5py.File('ae_real_inputs.hdf5', 'w') as f:
+		 f.create_dataset('ae_real_inputs',data=ae_real_inputs)
 
 
-def get_data_for_autoencoder():
-	""" Input: Root directory (string)
-		Output: Creates hdf5 files to use for our model.
-
-		Processes synthetic data by segmenting them into the following
-		1) Synthetic train inputs for autoencoder - 10%
-		2) Train input & labels for DeepFont model - 80%
-		3) Test input & labels for DeepFont Model - 10%
+def get_data_for_autoencoder(real_filename, synthetic_filename):
+	""" input: file paths to the desires files
 	"""
-	with h5py.File('synthetic_scae_inputs.hdf5', 'r') as hf:
-		scae_synthetic_inputs = hf['synthetic_scae_inputs'][:]
-	with h5py.File('scae_real_inputs_fixed.hdf5', 'r') as hf:
-		scae_real_inputs = hf['scae_real_inputs'][:]
-	return scae_real_inputs, scae_synthetic_inputs
+	with h5py.File(synthetic_filename, 'r') as hf:
+		ae_synthetic_inputs = hf[synthetic_filename[0:-5]][:]
+	with h5py.File(real_filename, 'r') as hf:
+		ae_real_inputs = hf[real_filename[0:-5]][:]
+
+	return ae_real_inputs, ae_synthetic_inputs
 
 
 
@@ -524,6 +519,8 @@ def get_font_dict():
 # ----------------------------- MAIN ----------------------------------#
 def main():
 	print ("We used main to run our preprocess functions. :]")
+	# process_unlabeled_real("./scrape-wtf-new")
+	# generate_crop_samples("./real_test_sample")
 
 
 if __name__ == "__main__":
