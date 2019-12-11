@@ -250,7 +250,7 @@ def main():
         # Specify an invalid GPU device
         with tf.device('/device:' + args.device):
             if args.mode == 'train':
-                train_inputs, train_labels = get_train()
+                train_inputs, train_labels = get_train_df()
 
                 for epoch in range(0, args.num_epochs):
                     print('========================== EPOCH %d  ==========================' % epoch)
@@ -259,7 +259,7 @@ def main():
                     print("**** SAVING CHECKPOINT AT END OF EPOCH ****")
                     manager.save()
             if args.mode == 'test':
-                test_inputs, test_labels = get_test()
+                test_inputs, test_labels = get_test_df()
                 print("--test accuracy--", test(model, test_inputs, test_labels))
             if args.mode == "single_img":
                 test_single_img(model, './cropped_ritchie.jpg')

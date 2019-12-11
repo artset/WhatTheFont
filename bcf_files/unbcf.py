@@ -8,6 +8,9 @@ from PIL import Image
 from StringIO import StringIO
 affine2d = __import__('affine2d')
 
+# TO RUN THIS FILE YOU MUST HAVE HAD DOWNLOADED SYN_TRAIN AND LABELS.
+# Files not in github as syn_train is upwards of 20GB.
+
 def initialize(data_dir, test):
     """ data_dir: directory of samples
         test: directory of labels
@@ -38,7 +41,7 @@ for i in range(1567000, tp_dataStore.size()):
 
     fontname = fontlist[index]
     fontfile = fontname + str(count)
-    
+
     savepath = "syn_train/" + fontname
     # Make directory if it does not exist.
     if not os.path.exists(savepath):
