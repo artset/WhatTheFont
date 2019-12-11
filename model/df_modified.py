@@ -107,7 +107,6 @@ class DeepFont(tf.keras.Model): #is this how to convert to sequential?
         """  given a batch of probs (batch size x 150) 
         and labels (batch size x 150)
         """
-        print("----------total accuracy ----------")
         acc = 0
 
         top_five = np.argsort(probs, axis = 1) # 256 x 150
@@ -176,12 +175,12 @@ def test(model, test_inputs, test_labels):
         batch_inputs = np.array(batch_inputs)
         batch_labels = np.array(batch_labels)
 
-        print("batch labels shape:", batch_labels.shape)
-
         predictions = model.call(batch_inputs) # prediction for a single image
 
         batch_accuracy = model.total_accuracy(predictions, batch_labels)
-        print("batch accuracy", batch_accuracy)
+
+        if i % 100 == 0:
+            print("batch accuracy", batch_accuracy)
         acc += batch_accuracy
 
     average_accuracy = acc / float(num_batches)
