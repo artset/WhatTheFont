@@ -209,7 +209,7 @@ def main():
 					train(autoencoder, real_images, synthetic_images)
 					print("**** SAVING CHECKPOINT AT END OF EPOCH ****")
 					manager.save()
-					scae.save_weights('./weights/weights_leaky_relu.h5')
+					autoencoder.save_weights('./weights/weights_leaky_relu.h5')
 			if args.mode == 'test':
 				real_images, synthetic_images = get_data_for_autoencoder("./ae_real_inputs.hdf5", "./synthetic_scae_inputs.hdf5")
 				test(autoencoder, real_images, synthetic_images)
