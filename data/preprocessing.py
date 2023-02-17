@@ -133,9 +133,13 @@ def create_hdf5(root_dir):
 		2) Train input & labels for DeepFont model - 80%
 		3) Test input & labels for DeepFont Model - 10%
 	"""
+	
 	test_inputs = []
 	test_labels = []
-
+	scae_inputs = []
+	train_inputs = []
+	train_labels = []
+	
 	with open('150_fonts.json') as json_file:
 		font_subset = json.load(json_file)
 
